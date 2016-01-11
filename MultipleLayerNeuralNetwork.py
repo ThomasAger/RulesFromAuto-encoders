@@ -89,7 +89,7 @@ class NeuralNetwork:
 
     def saveSpace(self, model, movie_vectors, layer, file_name):
 
-        hidden_layer = theano.function([model.layers[layer].input], model.layers[layer+1].output(train=False), allow_input_downcast=True)
+        hidden_layer = theano.function([model.layers[layer].input], model.layers[layer+1].get_output(train=False), allow_input_downcast=True)
         print hidden_layer
         transformed_space = hidden_layer(np.asarray(movie_vectors, dtype=np.float32))
 
