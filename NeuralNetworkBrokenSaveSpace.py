@@ -91,7 +91,7 @@ class NeuralNetwork:
 
 
         # When using a Dense as the hidden layer, this fails as it apparently has no attribute 'Output'
-        hidden_layer = theano.function([model.layers[0].input], model.layers[1].output(train=False), allow_input_downcast=True)
+        hidden_layer = theano.function([model.layers[0].input], model.layers[1].get_output(train=False), allow_input_downcast=True)
         print hidden_layer
         transformed_space = hidden_layer(np.asarray(movie_vectors, dtype=np.float32))
 
@@ -107,37 +107,23 @@ def main():
     loss = "sparse_bias_binary_crossentropy"
 
     dimension_100 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[100], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="All-Layer-100-L")
-    dimension_50 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[50], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="All-Layer-50-L")
-    dimension_20 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[20], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="All-Layer-20-L")
+                                 hidden_size=[300], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="All-Layer-300-L")
 
     print "GENRES"
     class_type = "Genres"
     output_size = 25
     loss = "bias_binary_crossentropy"
 
-    dimension_200 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[100], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Genres-Layer-100-L")
-    dimension_50 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[50], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Genres-Layer-50-L")
-    dimension_20 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[20], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Genres-Layer-20-L")
+    dimension_100 = NeuralNetwork(save_weights=True, epochs=250,
+                                 hidden_size=[300], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Genres-Layer-300-L")
 
     print "KEYWORDS"
     class_type = "Keywords"
     output_size = 100
     loss = "sparse_bias_binary_crossentropy"
 
-    dimension_200 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[100], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Keywords-Layer-100-L")
-    dimension_50 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[50], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Keywords-Layer-50-L")
-    dimension_20 = NeuralNetwork(save_weights=True, epochs=250,
-                                 hidden_size=[20], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Keywords-Layer-20-L")
-
-
+    dimension_100 = NeuralNetwork(save_weights=True, epochs=250,
+                                 hidden_size=[300], hidden_amount=1, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="Keywords-Layer-300-L")
 
 
 if  __name__ =='__main__':main()
