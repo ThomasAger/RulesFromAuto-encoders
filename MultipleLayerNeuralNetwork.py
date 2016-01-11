@@ -61,19 +61,19 @@ class NeuralNetwork:
         if save_weights == True:
             self.model.save_weights("newdata/weights/" + file_name + ".h5", overwrite=True)
         if save_space == True:
-            if hidden_amount > 1:
-                for i in range(hidden_amount - 1):
-                    self.saveSpace(self.model, movie_vectors, i, "newdata/spaces/" + file_name + str(hidden_amount) +".mds")
-            else:
-                self.saveSpace(self.model, movie_vectors, hidden_layer_space, "newdata/spaces/" + file_name + ".mds")
+            for i in range(hidden_amount - 1):
+                if i >= 1:
+                    self.saveSpace(self.model, movie_vectors, i, "newdata/spaces/" + file_name + str(hidden_amount) +".mds", True)
+                else:
+                    self.saveSpace(self.model, movie_vectors, i, "newdata/spaces/" + file_name + ".mds", False)
 
     def addLayers(self, model,  hidden_amount, dropout_chance, hidden_activation, layer_init, hidden_size, input_size, output_size, output_activation):
 
         model.add(Dense(output_dim=hidden_size[0], input_dim=input_size, init=layer_init))
 
-        for x in range(1, hidden_amount - 1):
+        for x in range(1, hidden_amount):
             model.add(Dense(activation=hidden_activation, output_dim = hidden_size[x]))
-            model.add(Dropout(dropout_chance))
+            #model.add(Dropout(dropout_chance))
 
         model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
 
@@ -87,9 +87,9 @@ class NeuralNetwork:
         return predicted_classes
 
 
-    def saveSpace(self, model, movie_vectors, layer, file_name):
+    def saveSpace(self, model, movie_vectors, layer, file_name, past_first_layer):
+        hidden_layer = theano.function([model.layers[0].input], model.layers[1].get_output(train=False), allow_input_downcast=True)
 
-        hidden_layer = theano.function([model.layers[layer].input], model.layers[layer+1].get_output(train=False), allow_input_downcast=True)
         print hidden_layer
         transformed_space = hidden_layer(np.asarray(movie_vectors, dtype=np.float32))
 
@@ -104,7 +104,7 @@ def main():
     output_size = 125
     loss = "sparse_bias_binary_crossentropy"
 
-    dimension_200 = NeuralNetwork(save_weights=True, epochs=250,
+    dimension_200 = NeuralNetwork(save_weights=True, epochs=1,
                                  hidden_size=[100,50,20], hidden_amount=3, output_size=output_size, class_type=class_type, loss=loss, save_space=True, save_architecture=True, file_name="All-Layer-2001005020-L" + str(2))
 
     print "#### ALL ####"
