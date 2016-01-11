@@ -1,0 +1,440 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"misclas",
+				"misclassified0"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "filmdata/IMDB_movie_data.txt",
+			"settings":
+			{
+				"buffer_size": 53942930,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "Packages/Python/Python.sublime-build",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 185.0,
+		"last_filter": "install",
+		"selected_items":
+		[
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"browse pa",
+				"Preferences: Browse Packages"
+			],
+			[
+				"",
+				"About"
+			],
+			[
+				"package",
+				"Preferences: Browse Packages"
+			],
+			[
+				"remove pack",
+				"Package Control: Remove Package"
+			],
+			[
+				"r",
+				"Package Control: Remove Package"
+			],
+			[
+				"remove package",
+				"Package Control: Remove Package"
+			],
+			[
+				"lint",
+				"SublimeLinter: Disable Linting"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"disable lint",
+				"Anaconda: Disable linting on this file"
+			],
+			[
+				"anaconda",
+				"Anaconda: Autoformat PEP8 Errors"
+			],
+			[
+				"enable",
+				"Anaconda: Enable linting on this file"
+			],
+			[
+				"ENABLE",
+				"Package Control: Enable Package"
+			],
+			[
+				"DISable",
+				"Anaconda: Disable linting on this file"
+			],
+			[
+				"disable",
+				"Package Control: Disable Package"
+			],
+			[
+				"Package Control: install",
+				"Package Control: Install Package"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"side bar",
+				"View: Toggle Open Files in Side Bar"
+			]
+		],
+		"width": 514.0
+	},
+	"console":
+	{
+		"height": 160.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"package control",
+			"install package",
+			"build",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/IMDB_movies_data_wasnt_found.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/allFilmNames.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/keywords.list/keywords.list",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/imdb_formatted_top50000.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/filmNames.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/13.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/uniquePhrases.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/9.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/17.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/films-ids.txt",
+		"/F/Downloads/DirectionsFilms (1).java",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/filmIds.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/14.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/films-ids (1)",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/ratings.list/ratings.list",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/top50000moviesbyvotes.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/IMDB_movie_data.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/newdata/spaces/Genres-Hidden 1600.mds",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesKeywords/class-blood",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/PROPERTIESANDCLUSTERS/clusters100.txt",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/films200.mds/films200.mds",
+		"/F/Downloads/films-ids",
+		"/F/Downloads/film-keys",
+		"/F/Downloads/Projections2lists.java",
+		"/F/Dropbox/PhD/My Work/Code/Keras/importdata.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/editdata.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/outputdata.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/9044.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/Tokens/20.film",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/PROPERTIESANDCLUSTERS/clusters50.txt",
+		"/C/Users/Tom/Anaconda2/Lib/site-packages/liblinear.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/films20.mds/films20.mds",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/PROPERTYDIRECTIONS/projections100.data.txt",
+		"/C/Users/Tom/Anaconda2/Lib/site-packages/theano/tensor/nnet/nnet.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/ClassifySingleGenre.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/newdata/spaces/All-Hidden 800.mds",
+		"/F/Dropbox/PhD/My Work/Code/Keras/NeuralNetwork.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/ClassifyMultipleKeywords.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/ClassifyMultipleGenres.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/newdata/spaces/Genres-Hidden 800.mds",
+		"/C/Users/Tom/Anaconda2/Lib/site-packages/keras/backend/theano_backend.py",
+		"/C/Users/Tom/Anaconda2/Lib/site-packages/keras/objectives.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/ClassifyMultipleRatings.py",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesRatings/class-PG-13-USA",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesRatings/class-PG-UK",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesKeywords/class-All",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/class-All",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesKeywords/class-adultery",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesKeywords/!class-All",
+		"/F/Dropbox/PhD/My Work/Code/Keras/filmdata/classesGenres/class-All",
+		"/F/Dropbox/PhD/My Work/Code/Keras/Keras.py",
+		"/C/Users/Tom/AppData/Roaming/Sublime Text 3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
+		"/C/Users/Tom/AppData/Roaming/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/C/Users/Thomas Ager/AppData/Roaming/Sublime Text 2/Packages/User/Preferences.sublime-settings",
+		"/D/Downloads (D Drive)/rob/script.js",
+		"/D/Downloads (D Drive)/rob/index.html",
+		"/D/Downloads (D Drive)/rob/main.css",
+		"/D/Downloads (D Drive)/rob/allscripts.js",
+		"/D/Downloads (D Drive)/rob/main.scss"
+	],
+	"find":
+	{
+		"height": 36.0
+	},
+	"find_in_files":
+	{
+		"height": 104.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"men at work",
+			"i dream of jo ",
+			"allergy",
+			"kap",
+			"{Dog Ed Pursuit (#1.7)}",
+			"'a' gai",
+			"$9.99",
+			"rate",
+			"dropout_probability",
+			"epsilon_decay",
+			"learning_rate",
+			"loss_function",
+			"hidden_layer_size",
+			"convert_to_int",
+			"convert_to_float",
+			"import_classes",
+			"import_file",
+			"import_string",
+			" \"",
+			"y_test",
+			"importdata.",
+			"importdata"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"learn",
+			"dropout_chance",
+			"dropout",
+			"decay",
+			"rate",
+			"loss",
+			"hidden_size",
+			"convertToInt",
+			"convertToFloat",
+			"importClasses",
+			"importFile",
+			"importString",
+			""
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "filmdata/IMDB_movie_data.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 53942930,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"BracketHighlighterBusy": false,
+							"bh_regions":
+							[
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content"
+							],
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 27577737.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 26.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 258.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/Python/Python.sublime-build",
+	"project": "keras.sublime-project",
+	"replace":
+	{
+		"height": 48.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 163.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
