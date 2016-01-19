@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 from sklearn import svm, linear_model
 import numpy as np
@@ -7,35 +5,40 @@ from sklearn.metrics import f1_score, accuracy_score
 from skll.metrics import kappa
 import DataTasks as dt
 import MovieTasks as mt
-from scipy import stats
+from scipy import stats, linalg
 
 
 class SVM:
 
-    class_type = "Keywords"
-    class_names = None
-    vector_path = None
-    #class_names = ["absurd", "abstract", "abrupt"]
-    #vector_path = "newdata\spaces\All-Layer-50-L.mds"
-    class_by_class = True
-    input_size = 200
-    training_data = 10000
-    amount_of_scores = 5
 
-    def __init__(self, class_type="Keywords", class_names=None, vector_path=None, class_by_class=True, input_size=200,
-                 training_data=10000, amount_of_scores=5, rankSVM=True):
+    def __init__(self, class_type="Phrases", class_names=None, vector_path=None, class_by_class=True, input_size=200,
+                 training_data=14000, amount_of_scores=400, low_kappa=0.1, high_kappa=0.4, rankSVM=False):
 
         movie_names, movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_names=class_names,
                                                                    class_by_class=class_by_class, vector_path=vector_path)
 
+
         file_names = dt.getAllFileNames("filmdata\classes" + class_type)
 
         n_train, x_train, y_train, n_test, x_test, y_test = self.getSampledData(movie_names, movie_vectors, movie_labels, training_data)
-        
-        top_keywords, overall_kappa, overall_accuracy, overall_f1 = self.runAllSVMs(len(y_train), amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, rankSVM)
+
+        high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
+                                                y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
+
+        #direction_ranks_dict = self.rankByDirections(movie_names, movie_vectors, file_names, high_directions)
+
+        #print direction_ranks_dict
+
         row = [overall_kappa, overall_accuracy, overall_f1]
 
-        dt.write1dArray(top_keywords, "filmdata/top_"+str(amount_of_scores)+"_" +class_type+"_" + str(input_size) + ".txt")
+        print row
+        print high_keywords
+        print low_keywords
+
+        dt.write1dArray(high_keywords, "filmdata/high_keywords.txt")
+        dt.write1dArray(low_keywords, "filmdata/low_keywords.txt")
+
+        dt.write1dArray(high_directions, "filmdata/high_"+str(amount_of_scores)+"_" +"LowPhrases"+"_" + str(input_size) + ".txt")
         dt.writeToSheet(row, "filmdata/experiments/experimenttest.csv")
 
         print "Kappa:", overall_kappa, "Accuracy:", overall_accuracy, "F1", overall_f1
@@ -44,7 +47,7 @@ class SVM:
 
         n_train = movie_names[:training_data]
         x_train = []
-        for x in range(len(x_train)):
+        for x in range(len(movie_vectors)):
             x_train.append(movie_vectors[:training_data])
 
         n_test = movie_names[training_data:]
@@ -61,21 +64,18 @@ class SVM:
             y0 = 0
             for y in range(len(y_train[yt])):
                 if y_train[yt][y] == 1:
-                    y1 = y1 + 1
+                    y1 += 1
                 if y_train[yt][y] == 0:
-                    y0 = y0 + 1
-
-            deleted_count= 0
-            if y0 > (y1*2):
-                for y in range(len(y_train[yt])):
-                    try:
-                        if y_train[yt][y] == 0:
-                            if (y0 - deleted_count) > y1*2:
-                                del x_train[yt][y]
-                                del y_train[yt][y]
-                                deleted_count = deleted_count + 1
-                    except:
-                        break
+                    y0 += 1
+            y = 0
+            while(y0 > int(y1*3)):
+                if y_train[yt][y] == 0:
+                    del x_train[yt][y]
+                    del y_train[yt][y]
+                    y0 -= 1
+                else:
+                    y += 1
+            print "len(0):", y0, "len(1):", y1
 
         return n_train, x_train, y_train, n_test, x_test, y_test
 
@@ -89,20 +89,16 @@ class SVM:
     """
 
     def runRankSVM(self, y_test, y_train, x_train, x_test, class_type, input_size, file_names, keyword):
-        clf = svm.LinearSVC()
-        print len(x_train), len(y_train)
+        clf = svm.SVC(kernel='linear', C=.1)
         clf.fit(x_train[keyword], y_train[keyword])
         #clf.decision_function(x_test)
-        direction = clf.coef_.ravel() / linalg.norm(clf.coef_)
+        direction = clf.coef_
 
-        tau_score = stats.kendalltau(linear_model.ridge.predict(X_test[b_test == i]), y_test[b_test == i])
 
-        tau_score = stats.kendalltau(np.dot(x_test, direction), y_test)
-
-        return tau_score, direction
+        return direction
 
     def runSVM(self, y_test, y_train, x_train, x_test, class_type, input_size, file_names, keyword):
-        clf = svm.SVC(kernel='linear', C=.1)
+        clf = svm.LinearSVC()
         clf.fit(x_train[keyword], y_train[keyword])
         #clf.decision_function(x_test)
         direction = clf.coef_
@@ -113,7 +109,7 @@ class SVM:
         f1 = f1_score(y_test[keyword], y_pred, average='macro')
         return kappa_score, accuracy, f1, direction
 
-    def runAllSVMs(self, keyword_amount, amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, rankSVM):
+    def runAllSVMs(self, keyword_amount, amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM):
         totals = np.zeros(3)
         kappa_scores = []
         accuracy_scores = []
@@ -122,13 +118,29 @@ class SVM:
         directions = []
         for x in range(keyword_amount-1):
             if rankSVM:
-                kappa, accuracy, f1, direction = self.runSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
+                direction = self.runRankSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
+                directions.append(direction)
             else:
                 kappa, accuracy, f1, direction = self.runSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
                 kappa_scores.append(kappa)
+                print kappa, len(x_train[x]), len(y_train[x])
                 accuracy_scores.append(accuracy)
                 f1_scores.append(f1)
                 directions.append(direction)
+
+        top_scores = np.argpartition(kappa_scores, -amount_of_scores)[-amount_of_scores:]
+        top_keywords = []
+        top_kappas = []
+        for i in top_scores:
+            top_keywords.append(file_names[i])
+            top_kappas.append(kappa_scores[i])
+
+        write1dArray(top_scores, "filmdata/TOP_SCORES_" + str(amount_of_scores) + "_" + "Phrases.txt")
+        write1dArray(top_scores, "filmdata/TOP_KAPPAS_" + str(amount_of_scores) + "_" + "Phrases.txt")
+
+        high_kappas = np.where(np.diff(kappa_scores) > 0.4)[0] + 1
+        low_kappas = np.where(np.diff(kappa_scores) > 0.1)[0] + 1
+
 
         for val in kappa_scores:
             totals[0] += val
@@ -140,17 +152,42 @@ class SVM:
             totals[2] += val
 
         kappa_scores = np.asarray(kappa_scores)
-        top_scores = np.argpartition(kappa_scores, -amount_of_scores)[-amount_of_scores:]
-        top_keywords = []
-        for i in top_scores:
-            top_keywords.append(file_names[i])
+
+        high_keywords = []
+        low_keywords = []
+        high_directions = []
+        low_directions = []
+        for val in high_kappas:
+            high_keywords.append(file_names[val])
+            high_directions.append(file_names[val])
+
+        for val in low_kappas:
+            low_keywords.append(file_names[val])
+            low_directions.append(file_names[val])
+
 
         overall_kappa = totals[0] / keyword_amount
         overall_accuracy = totals[1] / keyword_amount
         overall_f1 = totals[2] / keyword_amount
 
-        return top_keywords, overall_kappa, overall_accuracy, overall_f1
 
+
+
+        return high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions
+
+    def rankByDirections(self, movie_names, movie_vectors, file_names, directions):
+        dict = {}
+        for d in range(len(directions)):
+            unsorted_ranks = []
+            for v in range(len(movie_vectors)):
+                unsorted_ranks.append(linalg.norm(directions[d] * movie_vectors[v]))
+            unsorted_ranks = np.asarray(unsorted_ranks)
+            sorted_ranks = np.argpartition(unsorted_ranks, -len(directions))[-len(directions):]
+            top_ranked_movies = []
+            for s in sorted_ranks:
+                top_ranked_movies.append(movie_names[s])
+            dict[file_names[d]] = top_ranked_movies
+        return dict
 
 
 def main():
