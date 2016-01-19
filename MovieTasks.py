@@ -401,15 +401,19 @@ def getMatchedLines(file_name, lines_to_match):
     lines = file.readlines()
     for i in range(len(lines_to_match)):
         matched = False
-        for line in lines:
-            split_line = re.split(r'\t+', line)
+        last_movie = ""
+        for l in range(len(lines)):
+            if matched is True and re.split(r'\t+', lines[l])[0] != last_movie:
+                break
+            split_line = re.split(r'\t+', lines[l])
             split_line[0] = re.sub(r'\s+', '', split_line[0].translate(None, string.punctuation).lower())
             match_names[i] = re.sub(r'\s+', '', match_names[i].translate(None, string.punctuation).lower())
             if split_line[0] == match_names[i]:
-                matched_lines.append(line)
+                matched_lines.append(lines[l])
                 matched = True
-                print "yay"
-                break
+                last_movie = re.split(r'\t+', lines[l])[0]
+                print "Found a line for " + last_movie
+                continue
         if matched:
             print "Matched", lines_to_match[i]
         else:
@@ -617,7 +621,7 @@ def outputKeywords():
 
 #makeConsistent("filmdata/KeywordData/Missing_Films.txt", "filmdata/KeywordData/Missing_Films_Normalised.txt")
 
-getMatchedLines("filmdata/KeywordData/All_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/Missing_Films_Normalised.txt"))
+#getMatchedLines("filmdata/KeywordData/All_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/Missing_Films_Normalised.txt"))
 """
 
 movie_strings = dt.importString("filmdata/filmNames.txt")

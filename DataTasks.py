@@ -1,4 +1,5 @@
 import os
+import shutil
 
 """
 
@@ -43,7 +44,7 @@ def importString(file_name):
 def getAllFileNames(folder_path):
     file_names = []
     for i in os.listdir(folder_path):
-        if i.endswith("All") == False and i.endswith("all") == False:
+        if i.endswith("All") == False and i.endswith("all") == False and i.endswith("nonbinary") == False and i.endswith('archive') == False:
             file_names.append(i)
     return file_names
 
@@ -214,11 +215,49 @@ def write1dArray(array, name):
 
 def rewriteToAll(array_of_all, place_to_write):
     movie = []
-    len_all = len(array_of_all[0])
-    len_element = len(array_of_all)
+    len_element = len(array_of_all[0])
+    len_all = len(array_of_all)
+    print len_element
+    print len_all
     file = open(place_to_write, "w")
-    for i in xrange(len_all):
-        for j in xrange(len_element):
-            file.write(str(array_of_all[j][i]) + " ")
+
+    for j in xrange(len_element):
+        for i in xrange(len_all):
+            file.write(str(array_of_all[i][j]) + " ")
         file.write("\n")
     file.close()
+
+def writeToSheet(row, file_name):
+    print "Would write to sheet here."
+
+def writeAllPhrasesToSingleFile(files_folder, phrases):
+    file_names = getAllFileNames(files_folder)
+    matched_file_names = []
+    all_names = []
+
+    for p in phrases:
+        #print p
+        for f in file_names:
+            #print f
+            if p.strip() == f.strip():
+                matched_file_names.append(f)
+
+    for f in matched_file_names:
+        if f != "archive" and f != "nonbinary":
+            file = open(files_folder + "/" + f, "r")
+            lines = file.readlines()
+            current_file = []
+            for line in lines:
+                current_file.append(line.strip())
+            all_names.append(current_file)
+
+            file.close()
+    print "wat"
+    rewriteToAll(all_names, files_folder + "\class-low-all")
+
+def moveFiles(files_folder, phrases):
+    file_names = getAllFileNames(files_folder)
+    for p in phrases:
+        for f in file_names:
+            if f.strip() == p.strip():
+                shutil.copyfile(files_folder + "/" + f, files_folder + "/low_keywords/" + f)
