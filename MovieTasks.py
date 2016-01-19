@@ -1,7 +1,6 @@
 
 import DataTasks as dt
 import re
-from fuzzywuzzy import fuzz, process
 import numpy as np
 import string
 from collections import defaultdict
@@ -268,37 +267,30 @@ Get all lines that match a set of movie names / years
 
 def getMovieDataFromIMDB(movie_strings):
     movie_data = []
-    write_line_file = open("filmdata/IMDB_movie_data_15000FRPDURING.txt", "w")
+    write_line_file = open("filmdata/Found_Missing.txt", "w")
     failed_movies = []
     names = []
     years = []
-    movie_strings = movie_strings[9536:]
     for movie_string in movie_strings:
         names.append(movie_string[:-6])
         years.append(movie_string[-5:].strip())
 
-    #movie_data_file =, "r")
     for n in range(len(names)):
         found = False
         last_name = ""
-        old_num = 1636185
+        old_num = 0
         with open("filmdata/IMDB_movie_data.txttrimmed") as myFile:
             for num, line in enumerate(myFile, 1):
                 num = old_num
                 split_line = re.split(r'\t+', line)
                 movie_string = split_line[0]
-                #print line
                 movie_name = movie_string.split()
-                #print movie_name
                 del movie_name[len(movie_name)-1]
                 movie_name = " ".join(movie_name)
                 if found is True and last_name != movie_name:
                     break
                 movie_year = int(re.findall(r'\d+', movie_string.split()[len(movie_string.split())-1])[0])
-                #print names[n], movie_name
-                #print years[n], movie_year
                 if similar(names[n].upper().strip(), movie_name.upper().strip()) and int(years[n]) == int(movie_year):
-                #if names[n] in line and years[n] in line and "(TV)" not in line and "(V)" not in line:
                     movie_data.append(line)
                     write_line_file.write(line)
                     found = True
@@ -311,6 +303,122 @@ def getMovieDataFromIMDB(movie_strings):
     write_line_file.close()
     dt.write1dArray(failed_movies, "filmdata/failed_movies_final_push.txt")
     return movie_data
+
+""" Get a list of matching lines from another file """
+
+def getMatching(file_name, to_match):
+    names = []
+    years = []
+    for line in to_match:
+        names.append(movie_string[:-6].strip())
+        years.append(movie_string[-5:].strip())
+
+""" Make whitespace the only split, remove punctuation """
+
+def makeConsistentKeywords(file_name, new_file_name):
+    new_file = []
+    with open(file_name) as my_file:
+        for num, line in enumerate(my_file, 1):
+            if "{" in line or "?" in line:
+                continue
+            split_line = re.split(r'\t+', line)
+            split_on_bracket = split_line[0].split(" (")
+            if split_on_bracket[1].startswith("1") == False and split_on_bracket[1].startswith("2") == False:
+                year = split_on_bracket[2][:4]
+                name = "".join([split_on_bracket[0], split_on_bracket[1]])
+            else:
+                year = split_on_bracket[1][:4]
+                name = split_on_bracket[0]
+            name = name.translate(None, string.punctuation)
+            year = year.translate(None, string.punctuation)
+            keyword = re.sub(r'\s+', '', split_line[1]).translate(None, string.punctuation)
+            name_and_year = "\t".join([name, year])
+            new_line = "\t".join([name_and_year, keyword])
+            new_file.append(new_line)
+            print new_line
+
+    dt.write1dArray(new_file, new_file_name)
+
+""" Make whitespace the only split, remove punctuation """
+
+def makeConsistent(file_name, new_file_name):
+    new_file = []
+    with open(file_name) as my_file:
+        for num, line in enumerate(my_file, 1):
+            line = line.strip()
+            name = line[:-4]
+            year = line[len(line)-4:]
+
+            name = name.translate(None, string.punctuation)
+            year = year.translate(None, string.punctuation)
+            new_line = "\t".join([name, year])
+            new_file.append(new_line)
+            print new_line
+
+    dt.write1dArray(new_file, new_file_name)
+
+""" Gather which films are missing from our collected list """
+
+def getMissing(file_name, complete_list):
+    missing_list = []
+    name_list = []
+    for i in complete_list:
+        name_list.append(i.strip()[:-4])
+
+    compare_list = []
+    with open(file_name) as my_file:
+        for num, line in enumerate(my_file, 1):
+            split_line = re.split(r'\t+', line)
+            stripped_name = split_line[0].strip()[:-6]
+            compare_list.append(stripped_name)
+
+    compare_set = set(compare_list)
+    unique_list = list(compare_set)
+
+    for i in range(len(name_list)):
+        found = False
+        for l in compare_set:
+            if l == name_list[i]:
+                print "Found", name_list[i]
+                found = True
+                break
+        if found == False:
+            print "Didn't find", name_list[i]
+            missing_list.append(complete_list[i].strip())
+    return missing_list
+
+""" Using two consistent files, find lines that match between them """
+
+def getMatchedLines(file_name, lines_to_match):
+    matched_lines = []
+    failed_lines = []
+    match_names = []
+    match_years = []
+    for line in lines_to_match:
+        match_names.append(re.split(r'\t+', line)[0])
+        match_years.append(re.split(r'\t+', line)[1])
+    file = open(file_name, "r")
+    lines = file.readlines()
+    for i in range(len(lines_to_match)):
+        matched = False
+        for line in lines:
+            split_line = re.split(r'\t+', line)
+            split_line[0] = re.sub(r'\s+', '', split_line[0].translate(None, string.punctuation).lower())
+            match_names[i] = re.sub(r'\s+', '', match_names[i].translate(None, string.punctuation).lower())
+            if split_line[0] == match_names[i]:
+                matched_lines.append(line)
+                matched = True
+                print "yay"
+                break
+        if matched:
+            print "Matched", lines_to_match[i]
+        else:
+            failed_lines.append(lines_to_match[i])
+            print "Failed", lines_to_match[i]
+    dt.write1dArray(failed_lines, "filmdata/KeywordData/failed_second_match.txt")
+    dt.write1dArray(matched_lines, "filmdata/KeywordData/matched_lines_NEW.txt")
+
+
 
 """
 
@@ -410,14 +518,11 @@ as an array of those vectors. Information is found within the film files.
 """
 
 def getUniquePhrases(ordered_IDs, count_min, maintain_quantities):
-    #movie_files = []
     phrase_to_count = {}
-    # First collect together all possible vectors
     for ID in ordered_IDs:
         ID = ID.strip()
         if ID != "-1":
             open_ID = open("filmdata/Tokens/" + ID + ".film", "r")
-            #movie_files.append(open_ID)
             lines = open_ID.readlines()[1:]
             for line in lines:
                 split_line = line.split()
@@ -437,9 +542,9 @@ def getUniquePhrases(ordered_IDs, count_min, maintain_quantities):
 def getVectors(ordered_IDs, unique_phrases):
     vectors = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
     vectors_maintained = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
-    print len(vectors), len(vectors[0])
     multi_dictionary = {}
     dict_mapping = {}
+    print "Mapping to memory."
     for i in range(len(ordered_IDs)):
         ordered_IDs[i] = str(ordered_IDs[i])
     for i in range(len(ordered_IDs)):
@@ -454,17 +559,40 @@ def getVectors(ordered_IDs, unique_phrases):
             file.close()
         else:
             multi_dictionary[(ordered_IDs[i], split_line[0])] = 0
-    #print multi_dictionary
     for up in range(len(unique_phrases)):
         unique_phrases[up] = unique_phrases[up].strip()
 
-    print len(multi_dictionary)
-    for p in range(len(unique_phrases)):
+    print len("Iterating over memory.")
+    for p in range(13177, 25842, 1):
         for key, value in multi_dictionary.iteritems():
             if key[1] == unique_phrases[p]:
-                #print p, dict_mapping[key[0].strip()], key[0]
                 vectors_maintained[p][dict_mapping[key[0].strip()]] = value
                 vectors[p][dict_mapping[key[0]]] = 1
+        print unique_phrases[p]
+        dt.write1dArray(vectors_maintained[p], "filmdata/classesPhrases/nonbinary/class-" + unique_phrases[p])
+        dt.write1dArray(vectors[p], "filmdata/classesPhrases/class-" + unique_phrases[p])
+
+    return vectors_maintained, vectors
+
+
+def getVectorsIO(ordered_IDs, unique_phrases):
+    vectors = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
+    vectors_maintained = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
+
+    for p in range(11212, 25842, 1):
+        unique_phrases[p] = unique_phrases[p].strip()
+        for i in range(len(ordered_IDs)):
+            ordered_IDs[i] = ordered_IDs[i].strip()
+            if ordered_IDs[i] != "-1":
+                file = open("filmdata/Tokens/" + ordered_IDs[i] + ".film", "r")
+                lines = file.readlines()[1:]
+                for line in lines:
+                    split_line = line.split()
+                    split_line[1] = split_line[1].strip()
+                    if split_line[0] == p:
+                        vectors_maintained[p][i] = split_line[1]
+                        vectors[p][i] = 1
+                file.close()
         print unique_phrases[p]
         dt.write1dArray(vectors_maintained[p], "filmdata/classesPhrases/nonbinary/class-" + unique_phrases[p])
         dt.write1dArray(vectors[p], "filmdata/classesPhrases/class-" + unique_phrases[p])
@@ -481,15 +609,21 @@ def outputPhrases():
 def outputKeywords():
     movie_strings = dt.importString("filmdata/filmNames.txt")
     movie_data = getMovieDataFromIMDB(movie_strings)
-    #dt.write1dArray(movie_data, "IMDB_movie_data_15000FRP.txt")
     commonality = 0
     common_keywords = getMostCommonKeywords(0, "filmdata/IMDB_movie_data.txt")
     dt.write1dArray(common_keywords, "filmdata/common_keywords_15k_commanility_" + str(commonality))
     vectors = getKeywordVectors(common_keywords, movie_strings, "")
     dt.write2dArray(vectors, "filmdata/classesKeywords/class-extra-all-commonality-" + str(commonality))
-    #common_keywords = getCommonIMDBKeywords(20000)
-    #print common_keywords
-    #print len(common_keywords)
 
+#makeConsistent("filmdata/KeywordData/Missing_Films.txt", "filmdata/KeywordData/Missing_Films_Normalised.txt")
+
+getMatchedLines("filmdata/KeywordData/All_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/Missing_Films_Normalised.txt"))
+"""
+
+movie_strings = dt.importString("filmdata/filmNames.txt")
+missing_items = getMissing("filmdata/IMDB Keywords Movie Data/Matched_Films.txt", movie_strings)
+dt.write1dArray(missing_items, "filmdata/missing_films.txt")
+
+"""
 #outputPhrases()
 #outputKeywords()
