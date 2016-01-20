@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score, accuracy_score
 from skll.metrics import kappa
 import DataTasks as dt
 import MovieTasks as mt
-from scipy import stats, linalg
+from scipy import stats, linalg, spatial
 
 
 class SVM:
@@ -21,6 +21,10 @@ class SVM:
         file_names = dt.getAllFileNames("filmdata\classes" + class_type)
 
         n_train, x_train, y_train, n_test, x_test, y_test = self.getSampledData(movie_names, movie_vectors, movie_labels, training_data)
+
+        movie_names = None
+        movie_vectors = None
+        movie_labels = None
 
         top_keywords, top_kappas, high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
                                                 y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
@@ -82,6 +86,47 @@ class SVM:
         return n_train, x_train, y_train, n_test, x_test, y_test
 
 
+    def getSimilarity(self, vector1, vector2):
+        return 1 - spatial.distance.cosine(vector1, vector2)
+
+    def getMostSimilarTerms(self, high_values, low_values):
+        mapping_to_most_similar = []
+        for l in range(len(low_values)):
+            highest_value = 0
+            most_similar = 0
+            for h in range(len(high_values)):
+                similarity = self.getSimilarity(high_values[h], low_values[l])
+                if similarity > highest_value:
+                    highest_value = similarity
+                    most_similar = h
+            mapping_to_most_similar.append(most_similar)
+        return mapping_to_most_similar
+
+    def createClusteredPlane(self, high_value_plane, low_value_planes):
+        np_high_plane = np.asarray(high_value_plane)
+        np_low_plane = []
+        for lvp in low_value_planes:
+            np_low_plane.append(np.asarray(np_low_plane))
+        total_low_plane = []
+        for lp in np_low_plane:
+            total_low_plane = total_low_plane + lp
+        total_plane = total_low_plane + np_high_plane
+        clustered_plane = total_plane / len(np_low_plane) + 1
+        return clustered_plane
+
+    """
+
+    Given an array of high value planes, and a matching array of arrays of similar low matching planes
+    Return the clusters of the combined high value planes with their array of similar low value planes
+
+    """
+
+    def createClusteredPlanes(self, high_value_planes, low_value_planes):
+        clustered_planes = []
+        for h in high_value_planes:
+            for l in low_value_planes:
+                clustered_planes.append(self.createClusteredPlane(h, l))
+        return clustered_planes
     """
     We have used the LIBSVM 27 implementation. Because default values of the parameters yielded very poor results,
     we have used a grid search procedure to find the optimal value of the C parameter for every class. To this end, the
@@ -192,6 +237,7 @@ class SVM:
 
 
 def main():
+
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", name_distinction="All-20")
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", name_distinction="All-100")
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", name_distinction="All-200")
@@ -201,6 +247,20 @@ def main():
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", name_distinction="Keywords-20")
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", name_distinction="Keywords-100")
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", name_distinction="Keywords-200")
+
+    """
+    Nonbinary!
+    """
+
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="All-20")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="All-100")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="All-200")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-200")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-200")
 
 
 if  __name__ =='__main__':main()
