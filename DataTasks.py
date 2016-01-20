@@ -239,11 +239,14 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
         #print p
         for f in file_names:
             #print f
-            if p.strip() == f.strip():
+            if "class-" + p.strip() == f.strip():
+                print "matched:", f
                 matched_file_names.append(f)
+                break
 
     for f in matched_file_names:
-        if f != "archive" and f != "nonbinary":
+        if f != "archive" and f != "nonbinary" and f != "class-all" and f != "class-low-all"\
+                and f != "low_keywords":
             file = open(files_folder + "/" + f, "r")
             lines = file.readlines()
             current_file = []
@@ -252,8 +255,18 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
             all_names.append(current_file)
 
             file.close()
-    print "wat"
-    rewriteToAll(all_names, files_folder + "\class-low-all")
+    print "File about to be written."
+    rewriteToAll(all_names, files_folder + "\class-all")
+
+#writeAllPhrasesToSingleFile("filmdata/classesPhrases/nonbinary", importString("filmdata/uniquePhrases.txt"))
+def mean_of_array(array):
+    total = []
+    for a in range(len(array)):
+        for v in range(len(array[a])):
+            total[v] = total[v] + array[a][v]
+    for v in total:
+        v = v / len(array)
+    return total
 
 def moveFiles(files_folder, phrases):
     file_names = getAllFileNames(files_folder)
