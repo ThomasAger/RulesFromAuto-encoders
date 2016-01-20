@@ -118,6 +118,45 @@ class SVM:
             mapping_to_most_similar.append(most_similar)
         return mapping_to_most_similar
 
+    """
+
+    Given high directions and low directions, find a similarity mapping such that
+    each high value direction has a list of low value directions associated with it
+    according to a certain threshold, choosing 2n directions with n being the amount
+    of dimensions in the input space and each directions in the sequence being chosen
+    based on how dissimilar it was from the previous.
+
+    """
+
+    def createTermClusters(self, hv_directions, lv_directions, input_size, similarity_threshold):
+        hl_clusters = {}
+        h = []
+        selected_terms = []
+        for i in range(input_size * 2):
+            if i == 0:
+                h = hv_directions[0]
+            else:
+                # Using a mean of all previous terms here to avoid the problem of finding a term very similar to
+                # ...the previous one, e.g. "documentary" and "documentarys"
+                combined_terms = dt.mean_of_array(selected_terms)
+                h = self.getLeastSimilarTerm(h, hv_directions)
+            selected_terms.append(h)
+            for l in lv_directions:
+                if self.getSimilarity(l, h) > 0.5:
+                    hl_clusters[h].append(l)
+        return hl_clusters
+
+    def getLeastSimilarTerm(self, term, terms_to_match):
+        lowest_term = 99999999
+        term_index = 0
+        for t in range(len(terms_to_match)):
+            s = self.getSimilarity(term, terms_to_match[t])
+            if s < lowest_term:
+                lowest_term = s
+                term_index = t
+        return terms_to_match[term_index]
+
+
     def createClusteredPlane(self, high_value_plane, low_value_planes):
         np_high_plane = np.asarray(high_value_plane)
         np_low_plane = []
