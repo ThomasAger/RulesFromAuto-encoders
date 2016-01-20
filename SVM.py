@@ -62,6 +62,7 @@ class SVM:
         print len(movie_vectors), len(movie_labels)
         n_train = movie_names[:training_data]
         x_train = []
+        # Create an instance of movie vectors for every label
         for x in range(len(movie_labels)):
             x_train.append(movie_vectors[:training_data])
 
@@ -70,21 +71,26 @@ class SVM:
 
         y_train = []
         y_test = []
+        # Create an instance of labels for every label
         for ml in movie_labels:
             y_train.append(ml[:training_data])
             y_test.append(ml[training_data:])
         print len(x_train), len(x_train[0]), len(x_train[0][0])
         print len(y_train), len(y_train[0])
+        # For every label
         for yt in range(len(y_train)):
             y1 = 0
             y0 = 0
+            # Count the amount of 0's and 1's
             for y in range(len(y_train[yt])):
                 if y_train[yt][y] == 1:
                     y1 += 1
                 if y_train[yt][y] == 0:
                     y0 += 1
             y = 0
+            # Until the data is sampled to a  ratio of 1:2 or higher
             while(y0 > int(y1*2)):
+                # Delete the movies for that label that equal 0
                 if y_train[yt][y] == 0:
                     del x_train[yt][y]
                     del y_train[yt][y]
