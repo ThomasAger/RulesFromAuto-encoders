@@ -12,7 +12,7 @@ class SVM:
 
 
     def __init__(self, class_type="Phrases", name_distinction="", class_names=None, vector_path=None, class_by_class=True, input_size=200,
-                 training_data=14000, amount_of_scores=400, low_kappa=0.1, high_kappa=0.4, rankSVM=False):
+                 training_data=10000, amount_of_scores=400, low_kappa=0.1, high_kappa=0.5, rankSVM=False):
 
         movie_names, movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_names=class_names,
                                                                    class_by_class=class_by_class, vector_path=vector_path)
@@ -26,7 +26,7 @@ class SVM:
         movie_vectors = None
         movie_labels = None
 
-        top_keywords, top_kappas, high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
+        top_keywords, top_kappas, high_keywords, ultra_low_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
                                                 y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
 
         #direction_ranks_dict = self.rankByDirections(movie_names, movie_vectors, file_names, high_directions)
@@ -40,6 +40,7 @@ class SVM:
         print low_keywords
         dt.write1dArray(top_keywords, "filmdata/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
         dt.write1dArray(top_kappas, "filmdata/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
+        dt.write1dArray(ultra_low_keywords, "filmdata/allultra_low_keywords_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
 
         dt.write1dArray(high_keywords, "filmdata/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
         dt.write1dArray(low_keywords, "filmdata/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
@@ -49,11 +50,19 @@ class SVM:
 
         print "Kappa:", overall_kappa, "Accuracy:", overall_accuracy, "F1", overall_f1
 
-    def getSampledData(self, movie_names, movie_vectors, movie_labels, training_data):
 
+    """
+
+    Sample the data such that there is a unique amount of sampled movies for each
+    phrase, according to how often that phrase occurs.
+
+    """
+
+    def getSampledData(self, movie_names, movie_vectors, movie_labels, training_data):
+        print len(movie_vectors), len(movie_labels)
         n_train = movie_names[:training_data]
         x_train = []
-        for x in range(len(movie_vectors)):
+        for x in range(len(movie_labels)):
             x_train.append(movie_vectors[:training_data])
 
         n_test = movie_names[training_data:]
@@ -64,7 +73,8 @@ class SVM:
         for ml in movie_labels:
             y_train.append(ml[:training_data])
             y_test.append(ml[training_data:])
-
+        print len(x_train), len(x_train[0]), len(x_train[0][0])
+        print len(y_train), len(y_train[0])
         for yt in range(len(y_train)):
             y1 = 0
             y0 = 0
@@ -74,14 +84,14 @@ class SVM:
                 if y_train[yt][y] == 0:
                     y0 += 1
             y = 0
-            while(y0 > int(y1*3)):
+            while(y0 > int(y1*2)):
                 if y_train[yt][y] == 0:
                     del x_train[yt][y]
                     del y_train[yt][y]
                     y0 -= 1
                 else:
                     y += 1
-            print "len(0):", y0, "len(1):", y1
+            print yt, "len(0):", y0, "len(1):", y1
 
         return n_train, x_train, y_train, n_test, x_test, y_test
 
@@ -163,11 +173,14 @@ class SVM:
         f1_scores = []
 
         directions = []
+
+        # For every keyword
         for x in range(keyword_amount-1):
             if rankSVM:
                 direction = self.runRankSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
                 directions.append(direction)
             else:
+                # Run an SVM for that keyword that matches each movie vector to its respective label
                 kappa, accuracy, f1, direction = self.runSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
                 kappa_scores.append(kappa)
                 print kappa, len(x_train[x]), len(y_train[x])
@@ -182,11 +195,13 @@ class SVM:
             top_keywords.append(file_names[i])
             top_kappas.append(kappa_scores[i])
 
-
+        print kappa_scores
         high_kappas = np.where(np.diff(kappa_scores) > 0.5)[0] + 1
         low_kappas = np.where(np.diff(kappa_scores) > 0.1)[0] + 1
-
-
+        ultra_low_kappas = np.where(np.diff(kappa_scores) < 0.1)[0] + 1
+        print high_kappas
+        print low_kappas
+        print ultra_low_kappas
 
         for val in kappa_scores:
             totals[0] += val
@@ -205,11 +220,15 @@ class SVM:
         low_directions = []
         for val in high_kappas:
             high_keywords.append(file_names[val])
-            high_directions.append(file_names[val])
+            high_directions.append(directions[val])
 
         for val in low_kappas:
             low_keywords.append(file_names[val])
-            low_directions.append(file_names[val])
+            low_directions.append(directions[val])
+
+        ultra_low_keywords = []
+        for val in ultra_low_kappas:
+            ultra_low_keywords.append(file_names[val])
 
 
         overall_kappa = totals[0] / keyword_amount
@@ -219,7 +238,7 @@ class SVM:
 
 
 
-        return top_keywords, top_kappas, high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions
+        return top_keywords, top_kappas, high_keywords, ultra_low_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions
 
     def rankByDirections(self, movie_names, movie_vectors, file_names, directions):
         dict = {}
@@ -238,13 +257,25 @@ class SVM:
 
 def main():
 
+    newSVM = SVM(input_size=20, name_distinction="Normal-20")
+    newSVM = SVM(input_size=50, name_distinction="Normal-50")
+    newSVM = SVM(input_size=100, name_distinction="Normal-100")
+    newSVM = SVM(input_size=200, name_distinction="Normal-100")
+    newSVM = SVM(input_size=20, class_type="Phrases/nonbinary", name_distinction="NBNormal-20")
+    newSVM = SVM(input_size=50, class_type="Phrases/nonbinary", name_distinction="NBNormal-50")
+    newSVM = SVM(input_size=100, class_type="Phrases/nonbinary", name_distinction="NBNormal-100")
+    newSVM = SVM(input_size=200, class_type="Phrases/nonbinary", name_distinction="NBNormal-100")
+
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", name_distinction="All-20")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-50-L.mds", name_distinction="All-50")
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", name_distinction="All-100")
     newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", name_distinction="All-200")
     newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-20-L.mds", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-50-L.mds", name_distinction="Keywords-50")
     newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-100-L.mds", name_distinction="Keywords-100")
     newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-200-L.mds", name_distinction="Keywords-200")
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-50-L.mds", name_distinction="Keywords-50")
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", name_distinction="Keywords-100")
     newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", name_distinction="Keywords-200")
 
@@ -252,15 +283,18 @@ def main():
     Nonbinary!
     """
 
-    newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="All-20")
-    newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="All-100")
-    newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="All-200")
-    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-20")
-    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-100")
-    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-200")
-    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-20")
-    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-100")
-    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="Keywords-200")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="NBAll-20")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-50-L.mds", class_type="Phrases/nonbinary", name_distinction="NBAll-50")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="NBAll-100")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="NBAll-200")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-50-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-50")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-200")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-50-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-50")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", class_type="Phrases/nonbinary", name_distinction="NBKeywords-200")
 
 
 if  __name__ =='__main__':main()
