@@ -11,7 +11,7 @@ from scipy import stats, linalg
 class SVM:
 
 
-    def __init__(self, class_type="Phrases", class_names=None, vector_path=None, class_by_class=True, input_size=200,
+    def __init__(self, class_type="Phrases", name_distinction="", class_names=None, vector_path=None, class_by_class=True, input_size=200,
                  training_data=14000, amount_of_scores=400, low_kappa=0.1, high_kappa=0.4, rankSVM=False):
 
         movie_names, movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_names=class_names,
@@ -22,7 +22,7 @@ class SVM:
 
         n_train, x_train, y_train, n_test, x_test, y_test = self.getSampledData(movie_names, movie_vectors, movie_labels, training_data)
 
-        high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
+        top_keywords, top_kappas, high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = self.runAllSVMs(len(y_train), amount_of_scores,
                                                 y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
 
         #direction_ranks_dict = self.rankByDirections(movie_names, movie_vectors, file_names, high_directions)
@@ -34,11 +34,13 @@ class SVM:
         print row
         print high_keywords
         print low_keywords
+        dt.write1dArray(top_keywords, "filmdata/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
+        dt.write1dArray(top_kappas, "filmdata/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
 
-        dt.write1dArray(high_keywords, "filmdata/high_keywords.txt")
-        dt.write1dArray(low_keywords, "filmdata/low_keywords.txt")
+        dt.write1dArray(high_keywords, "filmdata/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
+        dt.write1dArray(low_keywords, "filmdata/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
 
-        dt.write1dArray(high_directions, "filmdata/high_"+str(amount_of_scores)+"_" +"LowPhrases"+"_" + str(input_size) + ".txt")
+        dt.write1dArray(high_directions, "filmdata/allhigh_"+str(amount_of_scores)+"_" +"LowPhrases"+"_" + str(input_size) + "_Round2.txt")
         dt.writeToSheet(row, "filmdata/experiments/experimenttest.csv")
 
         print "Kappa:", overall_kappa, "Accuracy:", overall_accuracy, "F1", overall_f1
@@ -135,11 +137,10 @@ class SVM:
             top_keywords.append(file_names[i])
             top_kappas.append(kappa_scores[i])
 
-        write1dArray(top_scores, "filmdata/TOP_SCORES_" + str(amount_of_scores) + "_" + "Phrases.txt")
-        write1dArray(top_scores, "filmdata/TOP_KAPPAS_" + str(amount_of_scores) + "_" + "Phrases.txt")
 
-        high_kappas = np.where(np.diff(kappa_scores) > 0.4)[0] + 1
+        high_kappas = np.where(np.diff(kappa_scores) > 0.5)[0] + 1
         low_kappas = np.where(np.diff(kappa_scores) > 0.1)[0] + 1
+
 
 
         for val in kappa_scores:
@@ -173,7 +174,7 @@ class SVM:
 
 
 
-        return high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions
+        return top_keywords, top_kappas, high_keywords, low_keywords, high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions
 
     def rankByDirections(self, movie_names, movie_vectors, file_names, directions):
         dict = {}
@@ -191,7 +192,15 @@ class SVM:
 
 
 def main():
-    newSVM = SVM()
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-20-L.mds", name_distinction="All-20")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-100-L.mds", name_distinction="All-100")
+    newSVM = SVM(vector_path="newdata/spaces/All-Layer-200-L.mds", name_distinction="All-200")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-20-L.mds", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-100-L.mds", name_distinction="Keywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Keywords-Layer-200-L.mds", name_distinction="Keywords-200")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-20-L.mds", name_distinction="Keywords-20")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-100-L.mds", name_distinction="Keywords-100")
+    newSVM = SVM(vector_path="newdata/spaces/Genres-Layer-200-L.mds", name_distinction="Keywords-200")
 
 
 if  __name__ =='__main__':main()
