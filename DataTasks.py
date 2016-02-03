@@ -48,6 +48,16 @@ def getAllFileNames(folder_path):
             file_names.append(i)
     return file_names
 
+
+def getAllFileNamesAndExtensions(folder_path):
+    file_names = []
+    print len(os.listdir(folder_path))
+    for i in os.listdir(folder_path):
+        #print i
+        if i != "class-all" and i != "nonbinary" and i != "low_keywords" and i != "archive":
+            file_names.append(i)
+    return file_names
+
 def importFile(file):
     temp_strings = []
     with file as s:
@@ -66,6 +76,7 @@ def importClasses(root_dir):
 DATA EDITING TASKS
 
 """
+
 
 def convertTo2d(movie_labels):
     movie_labels_2d = []
@@ -209,8 +220,7 @@ def write2dArray(array, name):
 def write1dArray(array, name):
     file = open(name, "w")
     for i in xrange(len(array)):
-        file.write(str(array[i]) + " ")
-        file.write("\n")
+        file.write(str(array[i]) + "\n")
     file.close()
 
 def rewriteToAll(array_of_all, place_to_write):
@@ -259,6 +269,30 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
     rewriteToAll(all_names, files_folder + "\class-all")
 
 #writeAllPhrasesToSingleFile("filmdata/classesPhrases/nonbinary", importString("filmdata/uniquePhrases.txt"))
+"""
+
+Note: This method is currently missing 12 files.
+
+"""
+
+
+def writeAllKeywordsToSingleFile(files_folder):
+    file_names = getAllFileNamesAndExtensions(files_folder)
+    all_names = []
+    for f in file_names:
+        if f != "all":
+            file = open(files_folder + "/" + f, "r")
+            lines = file.readlines()
+            current_file = []
+            for line in lines:
+                current_file.append(line.strip())
+            all_names.append(current_file)
+
+            file.close()
+    print "File about to be written."
+    rewriteToAll(all_names, files_folder + "\class-all")
+#writeAllKeywordsToSingleFile("filmdata/classesNewKeywords")
+
 def mean_of_array(array):
     total = []
     for a in range(len(array)):

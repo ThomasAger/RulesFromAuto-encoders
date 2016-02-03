@@ -106,10 +106,6 @@ def getCommonIMDBKeywords(top_value):
     print "These keywords have appeared in at least", lowest_value, "Films"
     return common_keywords
 
-
-        # if the title and the year match
-        # save the entire line to a new array
-
 """
 
 Given a set of movie names, get the IMDB movie lines for them
@@ -168,52 +164,6 @@ def getIMDBKeywordsForMovieNames(movie_names):
 
     print "Found:", x
     dt.write1dArray(matched_lines, "filmdata/imdb_movie_keywords.txt")
-        # if the title and the year match
-        # save the entire line to a new array
-
-"""
-
-Get 50k films. Pretty sure this method sucks.
-
-"""
-
-def get50k(movie_names):
-    stripped_movie_names = []
-    for movie in movie_names:
-        stripped_movie_names.append(movie.replace('\n', ''))
-    stripped_movie_names = sorted(stripped_movie_names)
-    file = open("filmdata\keywords.list\keywords.list", "r")
-    lines = file.readlines()
-    lines = sorted(lines)
-    keywords_list = lines[79748:]
-    matched_lines = []
-    x = 0
-    back_to_start = False
-    while x < 50000:
-        for line in keywords_list:
-            if "{" in stripped_movie_names[x]:
-                x = x + 1
-                break
-            split_line = re.split(r'\t+', line)
-            if similar(split_line[0], stripped_movie_names[x]):
-                matched_lines.append(line)
-                x = x + 1
-                print "MATCHED"
-            if ord(split_line[0][1]) > ord(stripped_movie_names[x][1]):
-                x = x + 1
-                break
-        print "cycled through, but couldn't find" + stripped_movie_names[x]
-        if back_to_start == True:
-            x = x + 1
-            back_to_start = False
-        else:
-            back_to_start == True
-
-
-    print "Found:", x
-    dt.write1dArray(matched_lines, "filmdata/top50000_keywords_list.txt")
-        # if the title and the year match
-        # save the entire line to a new array
 
 def getMovieData(class_type="Keywords", class_names=None, vector_path=None, input_size=200, class_by_class=False):
     movie_names = dt.importString("filmdata/filmNames.txt")
@@ -304,15 +254,6 @@ def getMovieDataFromIMDB(movie_strings):
     dt.write1dArray(failed_movies, "filmdata/failed_movies_final_push.txt")
     return movie_data
 
-""" Get a list of matching lines from another file """
-
-def getMatching(file_name, to_match):
-    names = []
-    years = []
-    for line in to_match:
-        names.append(movie_string[:-6].strip())
-        years.append(movie_string[-5:].strip())
-
 """ Make whitespace the only split, remove punctuation """
 
 def makeConsistentKeywords(file_name, new_file_name):
@@ -356,6 +297,15 @@ def makeConsistent(file_name, new_file_name):
             print new_line
 
     dt.write1dArray(new_file, new_file_name)
+
+def removeGaps(file_name, new_file_name):
+    new_file = []
+    with open(file_name) as my_file:
+        for num, line in enumerate(my_file, 1):
+            new_file.append(line.strip())
+    dt.write1dArray(new_file, new_file_name)
+
+#removeGaps("filmdata/KeywordData/matched_lines_NEW.txt", "filmdata/KeywordData/matched_lines_consistent.txt")
 
 """ Gather which films are missing from our collected list """
 
@@ -423,7 +373,6 @@ def getMatchedLines(file_name, lines_to_match):
     dt.write1dArray(matched_lines, "filmdata/KeywordData/matched_lines_NEW.txt")
 
 
-
 """
 
 Out of a list of movie_string : keyword, get the top_value most common keywords
@@ -431,25 +380,133 @@ from that list.
 
 """
 
-def getMostCommonKeywords(top_value, file_name):
+def getMostCommonKeywords(top_value, file_name, keyword_file, value_file):
     common_keywords = []
     file = open(file_name, "r")
     lines = file.readlines()
-    keywords = []
-    keyword_amounts = []
+    keywords = defaultdict(int)
     for line in lines:
-        keyword = line.split()[len(line.split)-1]
-        for i in range(len(keywords)):
-            if keywords[i] == keyword:
-                keyword_amounts[i] += 1
-                continue
-        keywords.append(keyword)
-        keyword_amounts.append(1)
-    keyword_amounts = np.asarray(keyword_amounts)
-    indices = np.argpartition(keyword_amounts, -top_value)[-top_value:]
-    for i in indices:
-        common_keywords.append(keywords[i])
-    return common_keywords
+        if len(line.split()) > 0:
+            line_split = line.split()
+            keyword = line_split[len(line_split)-1]
+            keywords[keyword] += 1
+        print line
+    sorted_dict = sorted(keywords.iteritems(), key=lambda x:-x[1])[:top_value]
+    print sorted_dict
+    keys = []
+    values = []
+    for key, value in sorted_dict:
+        keys.append(key)
+        values.append(value)
+    dt.write1dArray(keys, keyword_file)
+    dt.write1dArray(values, value_file)
+
+#getMostCommonKeywords(3000, "filmdata\KeywordData\Matched_Films.txt", "filmdata/KeywordData/most_common_keywords.txt", "filmdata/KeywordData/most_common_keywords_values.txt")
+
+
+def makeKeywordPPMIVectors(file_name, common_keywords):
+    print "?"
+    file = open(file_name, "r")
+    lines = file.readlines()
+    last_film = ""
+    movie_strings = dt.importString("filmdata/filmNames.txt")
+    standard_strings = []
+    for m in movie_strings:
+        m = m[:-5]
+        standard_strings.append(m.translate(None, string.punctuation).replace(" ", "").strip().upper())
+    for line in lines:
+        film_vectors = []
+        line = line.strip()
+        if len(line) > 2:
+            line_split = re.split(r'\t+', line)
+            line_split[0] = line_split[0].translate(None, string.punctuation).replace(" ", "").strip().upper()
+            file_save = ""
+            for m in range(len(standard_strings)):
+                if standard_strings[m] == line_split[0]:
+                    file_save = str(m)
+                    break
+            if file_save != "":
+                file = open("filmdata\KeywordData\Movie_Most_Common_Keyword_Mapping\\" + file_save, "a")
+                for keyword in common_keywords:
+                    if line_split[2] == keyword.strip():
+                        film_vectors.append("line")
+                        file.write(keyword)
+                        break
+                if last_film.strip() != line_split[0].strip() and last_film is not None:
+                    print "Succeeded", line_split[0]
+                    file.close()
+
+                last_film = line_split[0]
+            else:
+                print "Failed", line_split[0]
+#makeKeywordPPMIVectors("filmdata\KeywordData\Matched_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/most_common_keywords.txt"))
+
+def findMissingKeywords(file_name, common_keywords):
+    print "?"
+    file = open(file_name, "r")
+    lines = file.readlines()
+    last_film = ""
+    movie_strings = dt.importString("filmdata/filmNames.txt")
+    standard_strings = []
+    indexes = []
+    for m in movie_strings:
+        m = m[:-5]
+        standard_strings.append(m.translate(None, string.punctuation).replace(" ", "").strip().upper())
+    for line in lines:
+        film_vectors = []
+        line = line.strip()
+        if len(line) > 2:
+            line_split = re.split(r'\t+', line)
+            line_split[0] = line_split[0].translate(None, string.punctuation).replace(" ", "").strip().upper()
+            file_save = ""
+            for m in range(len(standard_strings)):
+                if standard_strings[m] == line_split[0]:
+                    print "matched", m, standard_strings[m], line_split[0]
+                    file_save = str(m)
+                    break
+            if file_save != "":
+                if last_film.strip() != line_split[0].strip() and last_film is not None:
+                    print "Succeeded", line_split[0]
+                    for m in range(len(standard_strings)):
+                        if standard_strings[m] == last_film:
+                            indexes.append(m)
+                            break
+                last_film = line_split[0]
+            else:
+                print "Failed", line_split[0],
+    dt.write1dArray(indexes, "filmdata/MISSING_FROM_MOVIEDATA.txt")
+
+#findMissingKeywords("filmdata\KeywordData\Matched_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/most_common_keywords.txt"))
+
+"""
+
+Compare a list of index-files to the list of 15,000 long movies and
+write the ones that are missing.
+
+"""
+
+
+def writeMissing(folder_name):
+    print "?"
+    file_names = dt.getAllFileNames(folder_name)
+    standard = range(15000)
+    missing = []
+    for i in standard:
+        found = False
+        for f in file_names:
+            if int(f) == int(i):
+                found = True
+                break
+        if found:
+            print "found", i
+        else:
+            missing.append(i)
+            print "no found", i
+    dt.write1dArray(missing, "filmdata/MISSING_KEYWORD_ITEMS.txt")
+
+#writeMissing("filmdata\KeywordData\Movie_Most_Common_Keyword_Mapping")
+
+
 
 """
 
@@ -488,7 +545,7 @@ def getIDs(movie_strings):
     movie_names = []
     for name in movie_strings:
         movie_names.append(name[:-5])
-    id_mappings = open("filmdata/films-ids.txt", "r")
+    id_mappings = open("filmdata/KeywordData/Movie_Most_Common_Keyword_Mapping/films-ids.txt", "r")
     id_mappings_lines = id_mappings.readlines()
     found_name = False
     failed_names = []
@@ -508,8 +565,43 @@ def getIDs(movie_strings):
             ordered_IDs.append(-1)
         x += 1
         print x
-    print failed_names
-    return ordered_IDs
+    dt.write1dArray(failed_names, "filmdata/KeywordData/NAMES_THAT_FAILED_IDS.txt")
+    dt.write1dArray(ordered_IDs, "filmdata/KeywordData/IDsByOriginalOrdering.txt")
+
+
+def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name_score_file2, name):
+    word_file1 = open(name_word_file1, "r")
+    score_file1 = open(name_score_file1, "r")
+    word_lines1 = word_file1.readlines()
+    score_lines1 = score_file1.readlines()
+    scores1 = []
+    words1 = []
+    for s in score_lines1:
+        scores1.append(float(s.strip()))
+    for w in word_lines1:
+        words1.append(w.strip())
+    word_file2 = open(name_word_file2, "r")
+    score_file2 = open(name_score_file2, "r")
+    word_lines2 = word_file2.readlines()
+    score_lines2 = score_file2.readlines()
+    scores2 = []
+    words2 = []
+    for s in score_lines2:
+        scores2.append(float(s))
+    for w in word_lines2:
+        words2.append(w.strip())
+    differences_list = []
+    for i in range(len(score_lines1)):
+        differences_list.append(scores1[i] - scores2[i])
+    most_different_words = [x for (y,x) in sorted(zip(differences_list,words1))]
+    differences_list = sorted(differences_list)
+    dt.write1dArray(most_different_words, "filmdata/SVM/most_different_words_" + name + ".txt")
+    dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
+
+
+getScoreDifferences("filmdata/SVM/ALL_NAMES_Phrases_All-200.txt", "filmdata/SVM/ALL_SCORES_Phrases_All-200.txt",
+                    "filmdata/SVM/ALL_NAMES_Phrases_All-200-400.txt", "filmdata/SVM/ALL_SCORES_Phrases_All-200-400.txt",
+                    "All200ToAll200400")
 
 """
 
@@ -542,6 +634,7 @@ def getUniquePhrases(ordered_IDs, count_min, maintain_quantities):
     unique_phrases = np.unique(common_phrases)
     unique_phrases = unique_phrases.tolist()
     return unique_phrases
+
 
 def getVectors(ordered_IDs, unique_phrases):
     vectors = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
@@ -578,6 +671,58 @@ def getVectors(ordered_IDs, unique_phrases):
 
     return vectors_maintained, vectors
 
+
+def getVectorsKeywords(movie_strings, keywords):
+    multi_dictionary = {}
+    dict_mapping = {}
+    movie_names = []
+    file_names = dt.getAllFileNames("filmdata\KeywordData\Movie_Most_Common_Keyword_Mapping")
+    for i in movie_strings:
+        movie_names.append(i.strip()[:-5])
+        print i
+    print "Mapping to memory."
+    for i in file_names:
+        try:
+            file = open("filmdata/KeywordData/Movie_Most_Common_Keyword_Mapping/" +i, "r")
+            lines = file.readlines()
+            dict_mapping[movie_strings[int(i)]] = i
+            for line in lines:
+                line = line.strip()
+                multi_dictionary[(movie_strings[int(i)], line)] = 1
+            file.close()
+        except IOError:
+            print movie_names[i]
+
+    for up in range(len(keywords)):
+        keywords[up] = keywords[up].strip()
+
+    print len("Iterating over memory.")
+    for p in range(len(keywords)):
+        vector = [0 for x in range(len(movie_strings))]
+        print len(vector)
+        for key, value in multi_dictionary.iteritems():
+            if key[1] == keywords[p]:
+                #print int(dict_mapping[key[0]])
+                vector[int(dict_mapping[key[0]])] = 1
+        print keywords[p]
+        dt.write1dArray(vector, "filmdata/classesKeywords/NewData/class-" + keywords[p])
+
+
+#getVectorsKeywords(dt.importString("filmdata/filmNames.txt"), dt.importString("filmdata/KeywordData/most_common_keywords.txt"))
+#dt.writeAllKeywordsToSingleFile("filmdata/classesNewKeywords")
+
+def getMissingIndexes(index_list, length):
+    full_index = range(length)
+    for i in index_list:
+        i = int(i)
+        full_index[i] = -1
+    missing_indexes = []
+    for i in full_index:
+        if i > -1:
+            missing_indexes.append(i)
+    dt.write1dArray(missing_indexes, "filmdata/missing_indexes_keywords.txt")
+
+getMissingIndexes(dt.importString("filmdata/MISSING_FROM_MOVIEDATA.txt"), 15000)
 
 def getVectorsIO(ordered_IDs, unique_phrases):
     vectors = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]
@@ -619,7 +764,7 @@ def outputKeywords():
     vectors = getKeywordVectors(common_keywords, movie_strings, "")
     dt.write2dArray(vectors, "filmdata/classesKeywords/class-extra-all-commonality-" + str(commonality))
 
-#makeConsistent("filmdata/KeywordData/Missing_Films.txt", "filmdata/KeywordData/Missing_Films_Normalised.txt")
+#makeConsistent("filmdata/KeywordData/Matched_Films.txt", "filmdata/KeywordData/Matched_Films_Normalised.txt")
 
 #getMatchedLines("filmdata/KeywordData/All_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/Missing_Films_Normalised.txt"))
 """
