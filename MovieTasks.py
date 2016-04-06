@@ -4,7 +4,9 @@ import re
 import numpy as np
 import string
 from collections import defaultdict
-
+import random
+import theano
+from theano.tensor.shared_randomstreams import RandomStreams
 """
 
 Get the top movies from the ratings list
@@ -165,21 +167,32 @@ def getIMDBKeywordsForMovieNames(movie_names):
     print "Found:", x
     dt.write1dArray(matched_lines, "filmdata/imdb_movie_keywords.txt")
 
-def getMovieData(class_type="Keywords", class_names=None, vector_path=None, input_size=200, class_by_class=False):
-    movie_names = dt.importString("filmdata/filmNames.txt")
-    if class_type == "All":
-        movie_labels = dt.getAllLabels("Keywords")
-        genre_labels = dt.getAllLabels("Genres")
-        for c in range(len(movie_labels)):
-            movie_labels[c].extend(genre_labels[c])
+def getMovieData(class_type="Keywords", class_names=None, vector_path=None, class_path=None, input_size=200, class_by_class=False):
+    movie_names = ""
+    if class_path is not None:
+        movie_labels = dt.convertToInt(dt.importString(class_path), True)
+        movie_labels = zip(*movie_labels)
+        movie_labels = list(movie_labels)
+        for l in range(len(movie_labels)):
+            movie_labels[l] = list(movie_labels[l])
+        print type(movie_labels), len(movie_labels), len(movie_labels[0])
     else:
-        if class_names is None:
-            if class_by_class:
-                movie_labels = dt.getClassByClass(class_type)
-            else:
-                movie_labels = dt.getAllLabels(class_type)
+        if class_type == "All":
+            movie_labels = dt.getAllLabels("Keywords")
+            genre_labels = dt.getAllLabels("Genres")
+            for c in range(len(movie_labels)):
+                movie_labels[c].extend(genre_labels[c])
         else:
-            movie_labels = dt.getLabels(class_type, class_names)
+            if class_names is None:
+                if class_by_class:
+                    movie_labels = dt.getClassByClass(class_type)
+                else:
+                    movie_labels = dt.getAllLabels(class_type)
+            else:
+                if len(class_names) == 1:
+                    movie_labels = dt.getLabel(class_type, class_names)
+                else:
+                    movie_labels = dt.getLabels(class_type, class_names)
     if vector_path is None:
         movie_vectors = dt.getMovieVectors(input_size=input_size)
     else:
@@ -297,6 +310,15 @@ def makeConsistent(file_name, new_file_name):
             print new_line
 
     dt.write1dArray(new_file, new_file_name)
+
+def divideSpace(space, amount_to_divide_by):
+    for s in space:
+        for i in range(len(s)):
+            s[i] = s[i] / amount_to_divide_by
+
+    return space
+
+#dt.write2dArray(divideSpace(dt.getMovieVectors(vector_path="newdata/spaces/AUTOENCODERnoise0100.mds"), 6), "newdata/spaces/AUTOENCODERnoise0100clean.mds")
 
 def removeGaps(file_name, new_file_name):
     new_file = []
@@ -599,12 +621,34 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name
     dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
 
 
-getScoreDifferences("filmdata/SVM/ALL_NAMES_Phrases_All-200.txt", "filmdata/SVM/ALL_SCORES_Phrases_All-200.txt",
-                    "filmdata/SVM/ALL_NAMES_Phrases_All-200-400.txt", "filmdata/SVM/ALL_SCORES_Phrases_All-200-400.txt",
-                    "All200ToAll200400")
+"""
+
+getScoreDifferences("filmdata/KeywordData/SVM/ALL_NAMES_NewKeywords_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt", "filmdata/KeywordData/SVM/ALL_SCORES_NewKeywords_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt",
+                    "filmdata/KeywordData/SVM/ALL_NAMES_NewKeywords_normal200.txt", "filmdata/KeywordData/SVM/ALL_SCORES_NewKeywords_normal200.txt",
+                    "200-150ae200-200nnL1toNormal200")
+
+
+getScoreDifferences("filmdata/SVM/ALL_NAMES_Phrases_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt", "filmdata/SVM/ALL_SCORES_Phrases_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt",
+                    "filmdata/SVM/ALL_NAMES_Phrases_normal200.txt", "filmdata/SVM/ALL_SCORES_Phrases_normal200.txt",
+                    "BCsgdAllAutoencoder-200-50xON200-200toNormal200")
 
 """
 
+def makeSpaceNoisy(input, amount_of_corruption):
+    amount_of_corruption = len(input[0]) * amount_of_corruption
+    print amount_of_corruption
+    for x in range(int(amount_of_corruption)):
+        for i in input:
+            r = random.randint(0, len(i)-1)
+            while i[r] == 0:
+                r = random.randint(0, len(i)-1)
+            i[r] = 0
+    return input
+"""
+input_size = 200
+dt.write2dArray(makeSpaceNoisy(dt.getMovieVectors(input_size=input_size), 0.25), "newdata/spaces/noise"+str(input_size)+".mds")
+"""
+"""
 Given a list of ordered IDs for the 15,0000 films.
 And get all of the phrases mentioned in those IDs and return that list.
 
@@ -722,7 +766,7 @@ def getMissingIndexes(index_list, length):
             missing_indexes.append(i)
     dt.write1dArray(missing_indexes, "filmdata/missing_indexes_keywords.txt")
 
-getMissingIndexes(dt.importString("filmdata/MISSING_FROM_MOVIEDATA.txt"), 15000)
+#getMissingIndexes(dt.importString("filmdata/MISSING_FROM_MOVIEDATA.txt"), 15000)
 
 def getVectorsIO(ordered_IDs, unique_phrases):
     vectors = [[0 for x in range(len(ordered_IDs))] for x in range(len(unique_phrases))]

@@ -34,6 +34,10 @@ def getLabels(class_type, class_names):
         labels.append(convertToInt(importString("filmdata/classes"+class_type+"/class-" + class_name + ""), False))
     return labels
 
+def getLabel(class_type, class_names):
+    labels = convertToInt(importString("filmdata/classes"+class_type+"/class-" + class_names[0] + ""), False)
+    return labels
+
 def importString(file_name):
     file = open(file_name, "r")
     temp_strings = []
@@ -50,6 +54,7 @@ def getAllFileNames(folder_path):
 
 
 def getAllFileNamesAndExtensions(folder_path):
+    print folder_path
     file_names = []
     print len(os.listdir(folder_path))
     for i in os.listdir(folder_path):
@@ -175,6 +180,7 @@ def convertToInt(string_array, vectors):
             temp_ints.extend(int_strings)
     return temp_ints
 
+
     # refactor this
 def printClasses(Y_test, Y_predicted, n_test):
     misclassified1 = 0
@@ -199,7 +205,6 @@ def printClasses(Y_test, Y_predicted, n_test):
                 correctCount = correctCount + 1
         if correctCount >= len(Y_test[0]):
             amt_correct = amt_correct + 1
-
     return amt_correct
 
 """
@@ -241,7 +246,7 @@ def writeToSheet(row, file_name):
     print "Would write to sheet here."
 
 def writeAllPhrasesToSingleFile(files_folder, phrases):
-    file_names = getAllFileNames(files_folder)
+    file_names = getAllFileNamesAndExtensions(files_folder)
     matched_file_names = []
     all_names = []
 
@@ -268,7 +273,7 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
     print "File about to be written."
     rewriteToAll(all_names, files_folder + "\class-all")
 
-#writeAllPhrasesToSingleFile("filmdata/classesPhrases/nonbinary", importString("filmdata/uniquePhrases.txt"))
+#writeAllPhrasesToSingleFile("filmdata/classesPhrases", importString("filmdata/uniquePhrases.txt"))
 """
 
 Note: This method is currently missing 12 files.
@@ -291,7 +296,7 @@ def writeAllKeywordsToSingleFile(files_folder):
             file.close()
     print "File about to be written."
     rewriteToAll(all_names, files_folder + "\class-all")
-#writeAllKeywordsToSingleFile("filmdata/classesNewKeywords")
+#writeAllKeywordsToSingleFile("F:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\unprocessed.tar\sorted_data\dvd\one_hot")
 
 def mean_of_array(array):
     total = []
@@ -308,3 +313,39 @@ def moveFiles(files_folder, phrases):
         for f in file_names:
             if f.strip() == p.strip():
                 shutil.copyfile(files_folder + "/" + f, files_folder + "/low_keywords/" + f)
+
+
+
+def sortAndOutput(file_name, second_file_name, output_file_name, second_output_file_name):
+    file1 = open(file_name, "r")
+    file2 = open(second_file_name, "r")
+    lines1 = file1.readlines()
+    lines2 = file2.readlines()
+    for line in range(len(lines1)):
+        lines1[line] = lines1[line].strip()
+        lines2[line] = lines2[line].strip()
+    lines1 = sorted(lines1)
+    lines2 = [y for (y,x) in sorted(zip(lines2,lines1))]
+    write1dArray(lines1, output_file_name)
+    write1dArray(lines2, second_output_file_name)
+"""
+sortAndOutput("filmdata/KeywordData/most_common_keywords.txt", "filmdata/KeywordData/most_common_keywords_values.txt",
+              "filmdata/KeywordData/most_common_keywordsSORTED.txt", "filmdata/KeywordData/most_common_keyword_valuesSORTED.txt")
+"""
+
+def get1Counts(file_name):
+    file = open(file_name, "r")
+    lines = file.readlines()
+    count_array = []
+    for line in lines:
+        line = line.strip()
+        line_file = open("filmdata/classesPhrases/" + line, "r")
+        count = 0
+        for lf in line_file:
+            if int(lf.strip()) == 1:
+                count += 1
+        count_array.append(count)
+        print count
+    write1dArray(count_array, "filmdata/count_array.txt")
+
+#get1Counts("filmdata/all-200-20-200 sorted.txt")

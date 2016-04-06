@@ -75,7 +75,7 @@ phrase, according to how often that phrase occurs.
 
 """
 
-def getSampledData(file_names, movie_names, movie_vectors, movie_labels, training_data, missing_samples):
+def getSampledData(file_names, movie_names, movie_vectors, movie_labels, training_data, missing_samples, amount_to_cut_at, largest_cut):
     n_train = movie_names[:training_data]
     x_train = []
 
@@ -96,6 +96,8 @@ def getSampledData(file_names, movie_names, movie_vectors, movie_labels, trainin
         y_train.append(movie_labels[x][:training_data])
         y_test.append(movie_labels[x][training_data:])
 
+
+
     missing_samples_reversed = []
     if missing_samples is not None:
         missing_samples = sorted(missing_samples)
@@ -103,6 +105,7 @@ def getSampledData(file_names, movie_names, movie_vectors, movie_labels, trainin
         missing_samples_reversed = missing_samples[::-1]
 
     # For every label
+    print len(file_names), len(file_names[0])
     print len(y_train), len(y_train[0])
     print len(x_train), len(x_train[0]), len(x_train[0][0])
     for yt in range(len(y_train) - 1):
@@ -117,17 +120,16 @@ def getSampledData(file_names, movie_names, movie_vectors, movie_labels, trainin
 
         # If the amount of instances for that phrase is below a threshold
         # Then assume they are not useful, and remove them.
-        if y1 < 90:
-            print "skipped deleted", file_names[yt]
+        if y1 < amount_to_cut_at or y1 > largest_cut:
+            print yt, "skipped deleted", file_names[yt]
             file_names[yt] = None
             y_train[yt] = None
             x_train[yt] = None
             continue
-        if missing_samples is not None:
+        if missing_samples is not "" and missing_samples is not None:
             for y in range(len(y_train[yt]), 0, -1):
                 if missing_samples_reversed[y] == -1:
                     del y_train[yt][y]
-        print len(y_train[yt])
         y = 0
         # Until the data is sampled to a  ratio of 1:2 or higher
         while(y0 > int(y1*2)):
@@ -138,8 +140,11 @@ def getSampledData(file_names, movie_names, movie_vectors, movie_labels, trainin
                 y0 -= 1
             else:
                 y += 1
-        print yt, "len(0):", y0, "len(1):", y1
+        print yt, "len(0):", y0, "len(1):", y1, file_names[yt]
+
     file_names = [x for x in file_names if x is not None]
+    x_train = [x for x in x_train if x is not None]
+    y_train = [x for x in y_train if x is not None]
     return file_names, n_train, x_train, y_train, n_test, x_test, y_test
 
 """
