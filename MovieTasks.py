@@ -621,18 +621,12 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name
     dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
 
 
-"""
-
-getScoreDifferences("filmdata/KeywordData/SVM/ALL_NAMES_NewKeywords_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt", "filmdata/KeywordData/SVM/ALL_SCORES_NewKeywords_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt",
-                    "filmdata/KeywordData/SVM/ALL_NAMES_NewKeywords_normal200.txt", "filmdata/KeywordData/SVM/ALL_SCORES_NewKeywords_normal200.txt",
+getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL1N0.6D10001.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL1N0.6D10001.mm.txt.txt",
+                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
                     "200-150ae200-200nnL1toNormal200")
 
-
-getScoreDifferences("filmdata/SVM/ALL_NAMES_Phrases_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt", "filmdata/SVM/ALL_SCORES_Phrases_BCsgdAllAutoencoder-200-50xON200-200Hidden1.txt",
-                    "filmdata/SVM/ALL_NAMES_Phrases_normal200.txt", "filmdata/SVM/ALL_SCORES_Phrases_normal200.txt",
-                    "BCsgdAllAutoencoder-200-50xON200-200toNormal200")
-
-"""
 
 def makeSpaceNoisy(input, amount_of_corruption):
     amount_of_corruption = len(input[0]) * amount_of_corruption

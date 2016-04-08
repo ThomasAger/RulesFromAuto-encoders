@@ -135,7 +135,7 @@ class SVM:
         directions = []
 
         # For every keyword
-        for x in range(keyword_amount-1):
+        for x in range(keyword_amount):
             if x_train[x] is not None:
                 if rankSVM:
                     direction = self.runRankSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
@@ -216,8 +216,8 @@ def main():
     print "starting"
     fp = "F:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\unprocessed.tar\sorted_data\\dvd"
 
-    for x in range(1, 4):
-        fn = "msda_representation_sowNL"+ str(x) + "N0.6D1000"+ str(x) + ".mm.txt"
+    for x in range(2, 6):
+        fn = "msda_representation_sowNL"+ str(x) + "N0.2D1000"+ str(x) + ".mm.txt"
         newSVM = SVM(vector_path=fp+"\\"+fn, class_path=fp+"\\one_hot\\class-all",
                  amount_to_cut_at=0, training_data=40000, name_distinction=fn, largest_cut=2500000)
 
