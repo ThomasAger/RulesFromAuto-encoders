@@ -216,8 +216,8 @@ def main():
     print "starting"
     fp = "F:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\unprocessed.tar\sorted_data\\dvd"
 
-    for x in range(2, 6):
-        fn = "msda_representation_sowNL"+ str(x) + "N0.2D1000"+ str(x) + ".mm.txt"
+    for x in range(4, 6):
+        fn = "msda_representation_sowNL"+ str(x) + "N0.6D1000"+ str(x) + ".mm.txt"
         newSVM = SVM(vector_path=fp+"\\"+fn, class_path=fp+"\\one_hot\\class-all",
                  amount_to_cut_at=0, training_data=40000, name_distinction=fn, largest_cut=2500000)
 

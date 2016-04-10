@@ -621,11 +621,11 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name
     dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
 
 
-getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL1N0.6D10001.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL1N0.6D10001.mm.txt.txt",
-                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
+getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
                     "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
-                    "200-150ae200-200nnL1toNormal200")
+                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL3N0.6D10003.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL3N0.6D10003.mm.txt.txt",
+                    "L2N0.6 to L3N0.6")
 
 
 def makeSpaceNoisy(input, amount_of_corruption):
