@@ -38,7 +38,6 @@ class SVM:
         print "getting training and test data"
         file_names, n_train, x_train, y_train, n_test, x_test, y_test = SVMTasks.getSampledData(file_names, movie_names,
                                                         movie_vectors, movie_labels, training_data, missing_samples_set, amount_to_cut_at, largest_cut)
-
         print len(y_train)
         print len(file_names)
         movie_names = None
@@ -66,13 +65,13 @@ class SVM:
                 for d in range(len(top_directions)):
                     dt.write1dArray(top_directions[d], "filmdata/MSDA_directions/"+name_distinction+ top_keywords[d]+ name_distinction + ".txt")
             elif class_type == "NewKeywords":
+                dt.write1dArray(kappa_scores, "filmdata/KeywordData/SVM/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
+                dt.write1dArray(file_names, "filmdata/KeywordData/SVM/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
                 dt.write1dArray(top_keywords, "filmdata/KeywordData/SVM/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
                 dt.write1dArray(top_kappas, "filmdata/KeywordData/SVM/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
                 dt.write1dArray(ultra_low_keywords, "filmdata/KeywordData/SVM/allultra_low_keywords_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
                 dt.write1dArray(high_keywords, "filmdata/KeywordData/SVM/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
                 dt.write1dArray(low_keywords, "filmdata/KeywordData/SVM/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(kappa_scores, "filmdata/KeywordData/SVM/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(file_names, "filmdata/KeywordData/SVM/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
                 for d in range(len(top_directions)):
                     dt.write1dArray(top_directions[d], "filmdata/KeywordData/new_directions/top_directions/"+name_distinction+top_keywords[d]+".txt")
             else:
@@ -117,11 +116,15 @@ class SVM:
             return 0, 0, 0, None
         #clf.decision_function(x_test)
         direction = clf.coef_
-        y_pred = clf.predict(x_test)
-        y_pred = y_pred.tolist()
-        kappa_score = kappa(y_test[keyword], y_pred)
-        #accuracy = accuracy_score(y_test[keyword], y_pred)
-        #f1 = f1_score(y_test[keyword], y_pred, average='macro')
+        try:
+            y_pred = clf.predict(x_test)
+            y_pred = y_pred.tolist()
+            kappa_score = kappa(y_test[keyword], y_pred)
+            #accuracy = accuracy_score(y_test[keyword], y_pred)
+            #f1 = f1_score(y_test[keyword], y_pred, average='macro')
+        except ValueError:
+            print keyword, "FAILED"
+            return 0, 0, 0, None
         print keyword, "SUCCESS"
 
         return kappa_score, 1, 1, direction
@@ -214,13 +217,25 @@ class SVM:
 
 def main():
     print "starting"
-    fp = "F:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\unprocessed.tar\sorted_data\\dvd"
+    """
+    fp = "D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed"
 
-    for x in range(4, 6):
+    for x in range(1, 5):
         fn = "msda_representation_sowNL"+ str(x) + "N0.6D1000"+ str(x) + ".mm.txt"
-        newSVM = SVM(vector_path=fp+"\\"+fn, class_path=fp+"\\one_hot\\class-all",
-                 amount_to_cut_at=0, training_data=40000, name_distinction=fn, largest_cut=2500000)
+        newSVM = SVM(vector_path=fp+"\\"+fn, class_path="filmdata\classesNewKeywords/class-all",
+                 amount_to_cut_at=200, training_data=10000, name_distinction=fn, largest_cut=2500000)
+    """
+    fp = "newdata/spaces/AUTOENCODERsigmoidsigmoidmse120sigmoid[200]"
 
+    for x in range(1, 2):
+        newSVM = SVM(vector_path=fp+".mds", class_path="filmdata\classesNewKeywords/class-all",
+                 amount_to_cut_at=25, training_data=10000, name_distinction=fp+str(x), largest_cut=2500)
+
+    fp = "newdata/spaces/AUTOENCODERsigmoidsigmoid120sigmoid[200]"
+
+    for x in range(1, 2):
+        newSVM = SVM(vector_path=fp+".mds", class_path="filmdata\classesNewKeywords/class-all",
+                 amount_to_cut_at=25, training_data=10000, name_distinction=fp+str(x), largest_cut=2500)
 
 
 

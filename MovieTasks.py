@@ -167,8 +167,9 @@ def getIMDBKeywordsForMovieNames(movie_names):
     print "Found:", x
     dt.write1dArray(matched_lines, "filmdata/imdb_movie_keywords.txt")
 
-def getMovieData(class_type="Keywords", class_names=None, vector_path=None, class_path=None, input_size=200, class_by_class=False):
+def getMovieData(class_type="Keywords", class_names=None, numpy_vector_path=None,vector_path=None, class_path=None, input_size=200, class_by_class=False):
     movie_names = ""
+
     if class_path is not None:
         movie_labels = dt.convertToInt(dt.importString(class_path), True)
         movie_labels = zip(*movie_labels)
@@ -193,7 +194,11 @@ def getMovieData(class_type="Keywords", class_names=None, vector_path=None, clas
                     movie_labels = dt.getLabel(class_type, class_names)
                 else:
                     movie_labels = dt.getLabels(class_type, class_names)
-    if vector_path is None:
+    if numpy_vector_path is not None:
+        movie_vectors = np.load(numpy_vector_path)
+        movie_vectors = np.ndarray.tolist(movie_vectors)
+        movie_vectors = list(reversed(zip(*movie_vectors)))
+    elif vector_path is None:
         movie_vectors = dt.getMovieVectors(input_size=input_size)
     else:
         movie_vectors = dt.getMovieVectors(input_size=input_size, vector_path=vector_path)
@@ -621,14 +626,20 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name
     dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
 
 
-getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL2N0.6D10002.mm.txt.txt",
-                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL3N0.6D10003.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL3N0.6D10003.mm.txt.txt",
-                    "L2N0.6 to L3N0.6")
+getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL1N0.4D10001.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL1N0.4D10001.mm.txt.txt",
+                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
+                    "L1N0.4 to L2N0.4")
+
+getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNl2N0.4D10002.mm.txt.txt",
+                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL3N0.4D10003.mm.txt.txt",
+                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL3N0.4D10003.mm.txt.txt",
+                    "L2N0.4 to L3N0.4")
 
 
-def makeSpaceNoisy(input, amount_of_corruption):
+def maskingNoise(input, amount_of_corruption):
     amount_of_corruption = len(input[0]) * amount_of_corruption
     print amount_of_corruption
     for x in range(int(amount_of_corruption)):
