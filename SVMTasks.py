@@ -75,77 +75,34 @@ phrase, according to how often that phrase occurs.
 
 """
 
-def getSampledData(file_names, movie_names, movie_vectors, movie_labels, training_data, missing_samples, amount_to_cut_at, largest_cut):
-    n_train = movie_names[:training_data]
-    x_train = []
+def getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut):
 
-    # Create an instance of movie vectors for every label
-    #     x_train[Phrase][Movie][N-Dimensional Coordinates]
+    print len(movie_labels)
+    print len(movie_labels[0])
 
-    for x in range(len(movie_labels)):
-        x_train.append(movie_vectors[:training_data])
-
-    n_test = movie_names[training_data:]
-    x_test = movie_vectors[training_data:]
-    y_train = []
-    y_test = []
-
-    # Create an instance of labels for every label
-    # So, y_train[Phrase][Movie][Label]
-    for x in range(len(movie_labels)):
-        y_train.append(movie_labels[x][:training_data])
-        y_test.append(movie_labels[x][training_data:])
-
-
-
-    missing_samples_reversed = []
-    if missing_samples is not None:
-        missing_samples = sorted(missing_samples)
-        print missing_samples
-        missing_samples_reversed = missing_samples[::-1]
-
-    # For every label
-    print len(file_names), len(file_names[0])
-    print len(y_train), len(y_train[0])
-    print len(x_train), len(x_train[0]), len(x_train[0][0])
-    for yt in range(len(y_train) - 1):
+    for yt in range(len(movie_labels) - 1):
         y1 = 0
         y0 = 0
-        # Count the amount of 0's and 1's
-        for y in range(len(y_train[yt])):
-            if y_train[yt][y] == 1:
+        for y in range(len(movie_labels[yt])):
+            if movie_labels[yt][y] == 1:
                 y1 += 1
-            if y_train[yt][y] == 0:
+            if movie_labels[yt][y] == 0:
                 y0 += 1
 
-        # If the amount of instances for that phrase is below a threshold
-        # Then assume they are not useful, and remove them.
-        if y1 < amount_to_cut_at or y1 > largest_cut:
-            print yt, "skipped deleted", file_names[yt]
-            file_names[yt] = None
-            y_train[yt] = None
-            x_train[yt] = None
-            continue
-        if missing_samples is not "" and missing_samples is not None:
-            for y in range(len(y_train[yt]), 0, -1):
-                if missing_samples_reversed[y] == -1:
-                    del y_train[yt][y]
-        y = 0
-        # Until the data is sampled to a  ratio of 1:2 or higher
-        while(y0 > int(y1*2)):
-            # Delete the movies for that label that equal 0
-            if y_train[yt][y] == 0:
-                del x_train[yt][y]
-                del y_train[yt][y]
-                y0 -= 1
-            else:
-                y += 1
         print yt, "len(0):", y0, "len(1):", y1, file_names[yt]
 
+        if y1 < amount_to_cut_at or y1 > largest_cut:
+            movie_labels[yt] = None
+            file_names[yt] = None
+
+            print yt, "skipped deleted", file_names[yt]
+
+            continue
+
     file_names = [x for x in file_names if x is not None]
-    x_train = [x for x in x_train if x is not None]
-    y_train = [x for x in y_train if x is not None]
-    return file_names, n_train, x_train, y_train, n_test, x_test, y_test
+    movie_labels = [x for x in movie_labels if x is not None]
+
+    return file_names, movie_labels
 
 """
 

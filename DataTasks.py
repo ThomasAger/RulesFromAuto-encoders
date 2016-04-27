@@ -1,6 +1,6 @@
 import os
 import shutil
-
+import numpy as np
 """
 
 DATA IMPORTING TASKS
@@ -92,15 +92,13 @@ def convertTo2d(movie_labels):
             movie_labels_2d.append([0, 1])
     return movie_labels_2d
 
-def splitData(training_data, movie_names, movie_vectors, movie_labels):
-    n_train = movie_names[:training_data]
-    x_train = movie_vectors[:training_data]
-    y_train = movie_labels[:training_data]
+def splitData(training_data, movie_vectors, movie_labels):
+    x_train = np.asarray(movie_vectors[:training_data])
+    y_train = np.asarray(movie_labels[:training_data])
 
-    n_test = movie_names[training_data:]
-    x_test = movie_vectors[training_data:]
-    y_test = movie_labels[training_data:]
-    return n_train, x_train, y_train, n_test, x_test, y_test
+    x_test = np.asarray(movie_vectors[training_data:])
+    y_test = np.asarray(movie_labels[training_data:])
+    return  x_train, y_train,  x_test, y_test
 
 def convertTo2d(movie_labels):
     movie_labels_2d = []

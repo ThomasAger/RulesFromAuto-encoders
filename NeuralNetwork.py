@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import numpy as np
-
+from keras.layers.noise import GaussianNoise
 import DataTasks as dt
 import MovieTasks
 from keras.layers.core import Dense, Activation, Dropout, AutoEncoder
@@ -13,6 +13,7 @@ import theano
 import os
 from sklearn.metrics import f1_score
 from keras.models import Sequential
+import SVM
 from keras.models import model_from_json
 import json
 import csv
@@ -22,6 +23,8 @@ class NeuralNetwork:
 
     # The shared model
     model = None
+    end_space = None
+
 
     # Shared variables for printing
     predicted_classes = None
@@ -30,151 +33,126 @@ class NeuralNetwork:
     history = None
     objective_score = None
     f1_score = None
+    encoder = None
     correct_classes = 0
 
     def __init__(self, input_size=200, hidden_size=[400], output_size=100, training_data=10000, class_type="Genres",
                  epochs=250,  learn_rate=0.01, loss="binary_crossentropy", batch_size=100, decay=1e-06,
                  hidden_activation="relu", layer_init="glorot_uniform", output_activation="softmax", dropout_chance=0.5,
-                  class_mode="binary",save_space=False, noise=0.25,
+                  class_mode="binary",save_space=False, autoencoder_space = None, encoders=None,
                  file_name="unspecified_filename", vector_path=None, layers_to_cut_at=None,
-                 optimizer="adagrad", class_names=None, is_autoencoder=False,
-                   denoising=True,  numpy_vector_path=None):
+                 optimizer="adagrad", class_names=None, is_autoencoder=False, noise=0,  numpy_vector_path=None):
 
         self.model = Sequential()
 
-        movie_names, movie_vectors, movie_labels = MovieTasks.getMovieData(class_type=class_type, class_names=class_names,  input_size=input_size, vector_path=vector_path,  numpy_vector_path=numpy_vector_path)
+        if autoencoder_space is not None:
+            movie_vectors = autoencoder_space
+        else:
+            movie_vectors, movie_labels = MovieTasks.getMovieData(class_type=class_type, class_names=class_names,  input_size=input_size, vector_path=vector_path,  numpy_vector_path=numpy_vector_path)
 
-        if numpy_vector_path is not None:
-            input_size = len(movie_vectors[0])
         if is_autoencoder:
             movie_labels = movie_vectors
-            movie_labels = np.asarray(movie_labels)
-            if denoising is True:
-                movie_vectors = MovieTasks.maskingNoise(movie_vectors, noise)
-                dt.write2dArray(movie_vectors, "newdata/spaces/noisy_"+file_name+".mds")
-            movie_vectors = np.asarray(movie_vectors)
-            self.createModel(self.model,dropout_chance, hidden_activation, layer_init, hidden_size,
-                    input_size, output_size, output_activation)
-            self.predicted_classes = self.trainNetwork(self.model, movie_vectors, movie_labels, movie_vectors,
-                                     movie_labels, epochs, batch_size, learn_rate, decay, loss, class_mode, optimizer)
-        else:
-            n_train, x_train, y_train, n_test, x_test, y_test = dt.splitData(training_data, movie_names, movie_vectors,
-                                                                             movie_labels)
-            n_train = np.asarray(n_train)
-            x_train = np.asarray(x_train)
-            y_train = np.asarray(y_train)
-            n_test = np.array(n_test)
-            x_test = np.asarray(x_test)
-            y_test = np.asarray(y_test)
-            self.createModel(self.model,  dropout_chance, hidden_activation, layer_init, hidden_size,
-                    input_size, output_size, output_activation)
-            self.predicted_classes = self.trainNetwork(self.model, x_train, y_train, x_test, y_test, epochs, batch_size, learn_rate, decay, loss, class_mode, optimizer)
-            self.f1_score = f1_score(y_test, self.predicted_classes, average='macro')
-            self.objective_score = self.model.evaluate(x_test, y_test, batch_size=batch_size, show_accuracy=True, verbose=1)
-            movie_vectors = np.asarray(movie_vectors)
-            print "F1 " + str(self.f1_score), "Correct " + str(self.correct_classes), "Objective and accuracy ", self.objective_score
 
-        if save_space is True:
-            """
-            if is_autoencoder:
-                total_file_name = "newdata/spaces/AUTOENCODER" + file_name +".mds"
-                end_space = self.predicted_classes
-                dt.write2dArray(end_space, total_file_name)
+        input_size = len(movie_vectors[0])
+        output_size = len(movie_labels[0])
+        print input_size, output_size
+        print movie_labels[0]
+
+        x_train, y_train, x_test, y_test = dt.splitData(training_data, movie_vectors, movie_labels)
+        movie_labels = np.asarray(movie_labels)
+        movie_vectors = np.asarray(movie_vectors)
+        x_train = np.asarray(x_train)
+        y_train = np.asarray(y_train)
+        x_test = np.asarray(x_test)
+        y_test = np.asarray(y_test)
+        if encoders is not None:
+            for e in encoders:
+                self.model.add(e)
+            self.model.add(Dense(output_dim=output_size, input_dim=hidden_size[0], init=layer_init, activation=output_activation))
+        elif is_autoencoder:
+            if noise > 0:
+                self.encoder = containers.Sequential([
+                    GaussianNoise(noise, input_shape=(input_size,)),
+                    Dense(output_dim=hidden_size[0],  input_dim=input_size, init=layer_init, activation=hidden_activation),])
             else:
-            """
-            for l in layers_to_cut_at:
-                total_file_name = "newdata/spaces/" + file_name + str(l) + ".mds"
-                end_space = self.saveSpace(self.model, l, movie_vectors, file_name, hidden_size, input_size,
-                layer_init,  hidden_activation, output_size, output_activation, dropout_chance,
-                learn_rate, decay, loss, class_mode)
-                dt.write2dArray(end_space, total_file_name)
-
-
-    def createAutoEncoder(self, model, dropout_chance, hidden_activation, layer_init, hidden_size,
-                    input_size, output_size, output_activation):
-        autoencoder_amt = len(hidden_size)
-        if autoencoder_amt >= 2:
-            temp_model = Sequential()
-            temp_model.add(Dense(output_dim=hidden_size[0],  input_dim=input_size, init=layer_init))
-            temp_model.add(Dense(activation=hidden_activation, output_dim=hidden_size[0]))
-            temp_model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
-
-            """
-            for x in range(0,autoencoder_amt,2):
-                encoder = containers.Sequential([Dense(output_dim=hidden_size[x], input_dim=input_size), Dense(hidden_size[x+1])])
-                decoder = containers.Sequential([Dense(output_dim=hidden_size[x], input_dim=hidden_size[x+1]), Dense(input_size)])
-                model.add(AutoEncoder(encoder=encoder, decoder=decoder, output_reconstruction=True))
-            """
-        elif autoencoder_amt == 1:
-            """
-            encoder = Dense(output_dim=hidden_size[0], input_dim=input_size, activation=hidden_activation)
-            decoder = Dense(output_dim=output_size, input_dim=hidden_size[0], activation=hidden_activation)
-            model.add(AutoEncoder(encoder=encoder, decoder=decoder, output_reconstruction=True))
-            """
-            model.add(Dense(output_dim=hidden_size[0],  input_dim=input_size, init=layer_init))
-            model.add(Dense(activation=hidden_activation, output_dim=hidden_size[0]))
-            model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
-
-
-    def createModel(self, model,  dropout_chance, hidden_activation, layer_init, hidden_size,
-                    input_size, output_size, output_activation):
-        hidden_amount = len(hidden_size)
-        print hidden_amount
-        if hidden_amount > 0:
-            print "Startup layer added, input " + str(input_size) + " output " + str(hidden_size[0])
-            model.add(Dense(output_dim=hidden_size[0], input_dim=input_size, init=layer_init))
+                self.encoder = Dense(output_dim=hidden_size[0],  input_dim=input_size, init=layer_init, activation=hidden_activation)
+            decoder = Dense(output_dim=output_size, init=layer_init)
+            self.model.add(AutoEncoder(encoder=self.encoder, decoder=decoder,
+                           output_reconstruction=False))
         else:
-            print "Model has no hidden layers."
-            model.add(Dense(output_dim=output_size, input_dim=input_size, init=layer_init))
-
-        for x in range(0, hidden_amount):
-            if x == hidden_amount-1:
-                print "Final hidden layer added, output " + str(output_size)
-                model.add(Dense(activation=hidden_activation, output_dim=output_size))
+            hidden_amount = len(hidden_size)
+            print hidden_amount
+            if hidden_amount > 0:
+                self.model.add(Dense(output_dim=hidden_size[0], input_dim=input_size, init=layer_init))
             else:
-                print str(x+1) + " Hidden layer added, output " + str(hidden_size[x])
-                model.add(Dense(activation=hidden_activation, output_dim=hidden_size[x]))
-        print "Output layer added, input " + str(hidden_size[hidden_amount-1]) + " output " + str(output_size)
-        model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
+                self.model.add(Dense(output_dim=output_size, input_dim=input_size, init=layer_init))
 
-    def trainNetwork(self, model, x_train, y_train, x_test, y_test, epochs, batch_size, learn_rate, decay, loss, class_mode, optimizer):
+            for x in range(0, hidden_amount):
+                if x == hidden_amount-1:
+                    self.model.add(Dense(activation=hidden_activation, output_dim=output_size))
+                else:
+                    self.model.add(Dense(activation=hidden_activation, output_dim=hidden_size[x]))
+            self.model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
+
         if optimizer is "adagrad":
             optimizer = Adagrad(lr=learn_rate, epsilon=decay)
-        model.compile(loss=loss, optimizer=optimizer, class_mode=class_mode)
-        self.history = model.fit(x_train, y_train, nb_epoch=epochs, batch_size=batch_size, verbose=1)
-        predicted_classes = model.predict_classes(x_test, batch_size=batch_size)
-        return predicted_classes
+        print input_size, output_size
+        print x_train[0]
+        print y_train[0]
+        self.model.compile(loss=loss, optimizer=optimizer, class_mode=class_mode)
+        self.history = self.model.fit(x_train, y_train, nb_epoch=epochs, batch_size=batch_size, show_accuracy=True, verbose=1)
+        self.predicted_classes = self.model.predict_classes(x_test, batch_size=batch_size)
 
+        if is_autoencoder is False:
+            #self.f1_score = f1_score(y_test, self.predicted_classes, average='macro')
+            self.objective_score = self.model.evaluate(x_test, y_test, batch_size=batch_size, show_accuracy=True, verbose=1)
+            dt.write1dArray(["Objective and accuracy ", self.objective_score], "scores/"+file_name+"score.txt")
+            print "F1 " + str(self.f1_score), "Correct " + str(self.correct_classes),  ["Objective and accuracy ", self.objective_score]
 
-    def saveSpace(self, model, layer_to_cut_at, movie_vectors, file_name, hidden_size, input_size,
-                  layer_init,  hidden_activation, output_size, output_activation, dropout_chance,
-                  learn_rate, decay, loss, class_mode):
-        hidden_amount = len(hidden_size)
-        print "Saving space for layer " + str(layer_to_cut_at)
-        truncated_model = Sequential()
-        if hidden_amount > 0:
-            truncated_model.add(Dense(output_dim=hidden_size[0], input_dim=input_size, init=layer_init, weights=model.layers[0].get_weights()))
-        else:
-            truncated_model.add(Dense(output_dim=output_size, input_dim=input_size, init=layer_init, weights=model.layers[0].get_weights()))
+        if save_space is True:
+            truncated_model = Sequential()
+            if encoders is not None:
+                total_file_name = "newdata/spaces/AUTOENCODER" + file_name +"FINETUNED.mds"
+                for e in range(len(encoders)):
+                    weights = self.model.layers[e].get_weights()
+                    truncated_model.add(encoders[e])
+                    truncated_model.layers[e].set_weights(weights)
+                truncated_model.compile(loss=loss, optimizer="sgd", class_mode=class_mode)
+            elif is_autoencoder:
+                total_file_name = "newdata/spaces/AUTOENCODER" + file_name +".mds"
+                truncated_model.add(self.encoder)
+                truncated_model.compile(loss=loss, optimizer="sgd", class_mode=class_mode)
+            else:
+                for l in layers_to_cut_at:
+                    total_file_name = "newdata/spaces/" + file_name + str(l) + ".mds"
+                    hidden_amount = len(hidden_size)
+                    print "Saving space for layer " + str(l)
+                    truncated_model = Sequential()
+                    if hidden_amount > 0:
+                        truncated_model.add(Dense(output_dim=hidden_size[0], input_dim=input_size, weights=self.model.layers[0].get_weights()))
+                    else:
+                        truncated_model.add(Dense(output_dim=output_size, input_dim=input_size, weights=self.model.layers[0].get_weights()))
+                    if l == 0:
+                        truncated_model.compile(loss=loss, optimizer='sgd', class_mode=class_mode)
+                        break
+                    else:
+                        for x in range(1, hidden_amount):
+                            truncated_model.add(Dense(activation=hidden_activation, output_dim=hidden_size[x-1], weights=self.model.layers[x].get_weights()))
+                            if l == x:
+                                print "Saving at hidden layer " + str(l)
+                                truncated_model.compile(loss=loss, optimizer='sgd', class_mode=class_mode)
+                                break
+                    truncated_model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
+                    trainer = Adagrad(lr=learn_rate, epsilon=decay)
+                    truncated_model.compile(loss=loss, optimizer=trainer, class_mode=class_mode)
+            self.end_space = truncated_model.predict(movie_vectors)
+            dt.write2dArray(self.end_space, total_file_name)
 
-        if layer_to_cut_at == 0:
-            truncated_model.compile(loss=loss, optimizer='sgd', class_mode=class_mode)
-            return truncated_model.predict(movie_vectors)
-        else:
-            for x in range(1, hidden_amount):
-                truncated_model.add(Dense(activation=hidden_activation, output_dim=hidden_size[x-1], weights=model.layers[x].get_weights()))
-                if layer_to_cut_at == x:
-                    print "Saving at hidden layer " + str(layer_to_cut_at)
-                    truncated_model.compile(loss=loss, optimizer='sgd', class_mode=class_mode)
-                    prediction = truncated_model.predict(movie_vectors)
-                    return prediction
-        truncated_model.add(Dense(output_dim=output_size, init=layer_init, activation=output_activation))
-        trainer = Adagrad(lr=learn_rate, epsilon=decay)
-        truncated_model.compile(loss=loss, optimizer=trainer, class_mode=class_mode)
-        return truncated_model.predict(movie_vectors)
+    def getEndSpace(self):
+        return self.end_space
 
-
-
+    def getEncoder(self):
+        return self.encoder
 
 def main():
 
@@ -198,26 +176,70 @@ def main():
     """
 
 
-    class_type = "Genres"
-    loss = "mse"
-    optimizer="sgd"
-    epochs=120
-    hidden_activation="sigmoid"
-    output_activation="sigmoid"
-    layers_to_cut_at=[1]
-    save_space=True
-    denoising = True
-    output_size = 200
-    input_size = 200
-    is_autoencoder = True
-    hidden_size = [200]
-    numpy_vector_path=None#"D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed/" + "NORMALIZEDno_below200no_above0.25.npy"
 
-    dimension_100 = NeuralNetwork( epochs=epochs, is_autoencoder=is_autoencoder, input_size=input_size, denoising=denoising,
-                                  output_size=output_size, class_type=class_type, numpy_vector_path=numpy_vector_path, noise=0.25,
-                                save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
-                                   hidden_activation=hidden_activation, output_activation=output_activation, hidden_size=hidden_size,
-                                  file_name=hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_size))
+    for amount_of_sda in range(1, 10):
+        class_type = "All"
+        loss = "mse"
+        optimizer="rmsprop"
+        epochs=2
+        hidden_activation="sigmoid"
+        output_activation="sigmoid"
+        layers_to_cut_at=[0]
+        save_space=True
+        batch_size=64
+        class_mode="categorical"
+        is_autoencoder = True
+        hidden_size = [1000]
+        noise = 1
+        numpy_vector_path="D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed/" + "NORMALIZEDno_below200no_above0.25.npy"
+        input_size=200
+        output_size=25
+        amount_of_sda =1
+        SDA_end_space = []
+        SDA_encoders = []
+        for s in range(0, amount_of_sda):
+            if s >= 1:
+                epochs=8
+                output_activation="linear"
+                input_size = hidden_size[0]
+                output_size = hidden_size[0]
+                hidden_size = [int(hidden_size[0]-(hidden_size[0]/amount_of_sda+1))]
+                print input_size, hidden_size, output_size
+                SDA = NeuralNetwork( autoencoder_space=SDA_end_space,
+                        epochs=epochs, is_autoencoder=is_autoencoder,  class_mode=class_mode,
+                                           class_type=class_type, numpy_vector_path=numpy_vector_path, noise=noise,
+                                        save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
+                                           hidden_activation=hidden_activation, output_activation=output_activation, hidden_size=hidden_size,
+                                          file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation +
+                                                    str(hidden_size)  + str(amount_of_sda)+ "SDA" + str(s+1))
+            else:
+                output_activation="linear"
+                SDA = NeuralNetwork( autoencoder_space= None, epochs=epochs, is_autoencoder=is_autoencoder,  class_mode=class_mode, input_size=input_size, output_size=output_size,
+                                         class_type=class_type, numpy_vector_path=numpy_vector_path, noise=noise,
+                                        save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
+                                           hidden_activation=hidden_activation, output_activation=output_activation, hidden_size=hidden_size,
+                                          file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_size) + str(amount_of_sda) + "SDA" + str(s+1))
+
+            SDA_end_space = SDA.getEndSpace()
+            SDA_encoders.append(SDA.getEncoder())
+        optimizer="adagrad"
+        loss="binary_crossentropy"
+        epochs=2
+        is_autoencoder = False
+        autoencoder_space = None
+        layers_to_cut_at = [0,1,2,3]
+        output_size=125
+        input_size=200
+        output_activation="softmax"
+        print "FINE TUNING"
+        class_mode="binary"
+        SDA = NeuralNetwork( autoencoder_space= autoencoder_space, encoders=SDA_encoders,
+                        epochs=epochs, is_autoencoder=is_autoencoder, input_size=input_size, class_mode=class_mode,
+                                          output_size=output_size, class_type=class_type, numpy_vector_path=numpy_vector_path, noise=noise,
+                                        save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
+                                           hidden_activation=hidden_activation,  output_activation=output_activation, hidden_size=hidden_size,
+                                          file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_size) + str(amount_of_sda))
+
 
     """
     #WORKING @ HIGHEST ACCURACY, F1, ETC FOR MULTI-LABEL, FOLLOWING "REVISITING MULTI-LABEL NEURAL NETS" GUIDELINES

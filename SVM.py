@@ -13,9 +13,14 @@ class SVM:
 
 
     def __init__(self, class_type="Phrases", name_distinction="", class_names=None, vector_path=None, class_path=None, class_by_class=True, input_size=200,
-                 training_data=10000, amount_of_scores=400, low_kappa=0.1, high_kappa=0.5, rankSVM=False, missing_samples="", amount_to_cut_at=100, largest_cut=21470000):
+                 training_data=10000, amount_of_scores=400,  low_kappa=0.1, high_kappa=0.5, rankSVM=False, amount_to_cut_at=100, largest_cut=21470000):
         print "getting movie data"
-        movie_names, movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_path=class_path,
+
+        missing_samples = None
+        if class_type == "NewKeywords":
+            missing_samples="filmdata/MISSING_KEYWORD_ITEMS.txt"
+
+        movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_path=class_path,
                                                                    class_names=class_names, class_by_class=class_by_class, vector_path=vector_path)
 
         print "getting file names"
@@ -23,74 +28,34 @@ class SVM:
             file_names = dt.getAllFileNamesAndExtensions("filmdata\classes" + class_type)
         else:
             file_names = dt.getAllFileNamesAndExtensions(class_path[:-10])
-        missing_samples_set = range(15000)
-        if missing_samples != "":
-            print "getting missing samples"
-            missing_samples = dt.importString(missing_samples)
-            for m in missing_samples:
-                missing_samples_set[int(m)] = -1
-                print movie_names[int(m)]
-        else:
 
-            missing_samples_set = None
         print len(movie_labels), len(movie_labels[0])
 
         print "getting training and test data"
-        file_names, n_train, x_train, y_train, n_test, x_test, y_test = SVMTasks.getSampledData(file_names, movie_names,
-                                                        movie_vectors, movie_labels, training_data, missing_samples_set, amount_to_cut_at, largest_cut)
-        print len(y_train)
-        print len(file_names)
+
+
+        x_train = movie_vectors[:training_data]
+        x_test = movie_vectors[training_data:]
+
+        file_names, movie_labels = SVMTasks.getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut)
+        movie_labels = zip(*movie_labels)
+        y_train = movie_labels[:training_data]
+        y_test = movie_labels[training_data:]
+        print len(y_test), len(y_test[0])
+
+        y_train = zip(*y_train)
+        y_test = zip(*y_test)
+
         movie_names = None
         movie_vectors = None
         movie_labels = None
 
-        kappa_scores, top_keywords, top_kappas, top_directions, high_keywords, ultra_low_keywords, low_keywords, \
-        high_directions, low_directions, overall_kappa, overall_accuracy, overall_f1, directions = \
-        self.runAllSVMs(len(y_train), amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
+        kappa_scores, directions =   self.runAllSVMs(len(y_train), amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
 
-        row = [overall_kappa, overall_accuracy, overall_f1]
-
-        print row
-        print high_keywords
-        print low_keywords
-        try:
-            if class_path is not None:
-                dt.write1dArray(top_keywords, "filmdata/MSDA/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(top_kappas, "filmdata/MSDA/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(ultra_low_keywords, "filmdata/MSDA/allultra_low_keywords_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(high_keywords, "filmdata/MSDA/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(low_keywords, "filmdata/MSDA/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(kappa_scores, "filmdata/MSDA/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(file_names, "filmdata/MSDA/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
-                for d in range(len(top_directions)):
-                    dt.write1dArray(top_directions[d], "filmdata/MSDA_directions/"+name_distinction+ top_keywords[d]+ name_distinction + ".txt")
-            elif class_type == "NewKeywords":
-                dt.write1dArray(kappa_scores, "filmdata/KeywordData/SVM/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(file_names, "filmdata/KeywordData/SVM/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(top_keywords, "filmdata/KeywordData/SVM/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(top_kappas, "filmdata/KeywordData/SVM/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(ultra_low_keywords, "filmdata/KeywordData/SVM/allultra_low_keywords_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(high_keywords, "filmdata/KeywordData/SVM/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(low_keywords, "filmdata/KeywordData/SVM/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
-                for d in range(len(top_directions)):
-                    dt.write1dArray(top_directions[d], "filmdata/KeywordData/new_directions/top_directions/"+name_distinction+top_keywords[d]+".txt")
-            else:
-                dt.write1dArray(top_keywords, "filmdata/SVM/allTOP_SCORES_" + str(amount_of_scores) + "_" + class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(top_kappas, "filmdata/SVM/allTOP_KAPPAS_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(ultra_low_keywords, "filmdata/SVM/allultra_low_keywords_" + str(amount_of_scores) + "_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(high_keywords, "filmdata/SVM/allhigh_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(low_keywords, "filmdata/SVM/alllow_keywords_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(kappa_scores, "filmdata/SVM/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
-                dt.write1dArray(file_names, "filmdata/SVM/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
-                for d in range(len(top_directions)):
-                    dt.write1dArray(top_directions[d], "filmdata/new_directions/top_directions/"+name_distinction+ top_keywords[d]+".txt")
+        dt.write1dArray(kappa_scores, "SVMResults/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
+        dt.write1dArray(file_names, "SVMResults/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
 
 
-            dt.writeToSheet(row, "filmdata/experiments/experimenttest.csv")
-
-            print "Kappa:", overall_kappa, "Accuracy:", overall_accuracy, "F1", overall_f1
-        except:
-            print "Nope"
 
     """
     We have used the LIBSVM 27 implementation. Because default values of the parameters yielded very poor results,
@@ -107,98 +72,24 @@ class SVM:
         direction = clf.coef_
         return direction
 
-    def runSVM(self, y_test, y_train, x_train, x_test, class_type, input_size, file_names, keyword):
+    def runSVM(self, y_test, y_train, x_train, x_test, class_type, input_size, file_names):
         clf = svm.LinearSVC()
-        try:
-            clf.fit(x_train[keyword], y_train[keyword])
-        except ValueError:
-            print keyword, "FAILED"
-            return 0, 0, 0, None
-        #clf.decision_function(x_test)
+        clf.fit(x_train, y_train)
         direction = clf.coef_
-        try:
-            y_pred = clf.predict(x_test)
-            y_pred = y_pred.tolist()
-            kappa_score = kappa(y_test[keyword], y_pred)
-            #accuracy = accuracy_score(y_test[keyword], y_pred)
-            #f1 = f1_score(y_test[keyword], y_pred, average='macro')
-        except ValueError:
-            print keyword, "FAILED"
-            return 0, 0, 0, None
-        print keyword, "SUCCESS"
-
-        return kappa_score, 1, 1, direction
+        y_pred = clf.predict(x_test)
+        y_pred = y_pred.tolist()
+        kappa_score = kappa(y_test, y_pred)
+        return kappa_score,  direction
 
     def runAllSVMs(self, keyword_amount, amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM):
-        totals = np.zeros(3)
         kappa_scores = []
-        accuracy_scores = []
-        f1_scores = []
-
         directions = []
+        for y in range(len(y_train)):
+            kappa,  direction = self.runSVM(y_test[y], y_train[y], x_train, x_test, class_type, input_size, file_names)
+            kappa_scores.append(kappa)
+            print y, kappa, file_names[y]
 
-        # For every keyword
-        for x in range(keyword_amount):
-            if x_train[x] is not None:
-                if rankSVM:
-                    direction = self.runRankSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
-                    directions.append(direction)
-                else:
-                    # Run an SVM for that keyword that matches each movie vector to its respective label
-                    kappa, accuracy, f1, direction = self.runSVM(y_test, y_train, x_train, x_test, class_type, input_size, file_names, x)
-                    kappa_scores.append(kappa)
-                    print kappa, len(x_train[x]), len(y_train[x])
-                    accuracy_scores.append(accuracy)
-                    f1_scores.append(f1)
-                    directions.append(direction)
-
-        top_scores = np.argpartition(kappa_scores, amount_of_scores)[-amount_of_scores:]
-        top_keywords = []
-        top_kappas = []
-        top_directions = []
-        for i in top_scores:
-            top_keywords.append(file_names[i])
-            top_kappas.append(kappa_scores[i])
-            top_directions.append(directions[i])
-
-        high_kappas = np.where(np.diff(kappa_scores) > 0.5)[0] + 1
-        low_kappas = np.where(np.diff(kappa_scores) > 0.1)[0] + 1
-        ultra_low_kappas = np.where(np.diff(kappa_scores) < 0.1)[0] + 1
-
-        for val in kappa_scores:
-            totals[0] += val
-
-        for val in accuracy_scores:
-            totals[1] += val
-
-        for val in f1_scores:
-            totals[2] += val
-
-        kappa_scores = np.asarray(kappa_scores)
-
-        high_keywords = []
-        low_keywords = []
-        high_directions = []
-        low_directions = []
-        for val in high_kappas:
-            high_keywords.append(file_names[val])
-            high_directions.append(directions[val])
-
-        for val in low_kappas:
-            low_keywords.append(file_names[val])
-            low_directions.append(directions[val])
-
-        ultra_low_keywords = []
-        for val in ultra_low_kappas:
-            ultra_low_keywords.append(file_names[val])
-
-        """
-        overall_kappa = totals[0] / keyword_amount
-        overall_accuracy = totals[1] / keyword_amount
-        overall_f1 = totals[2] / keyword_amount
-        """
-
-        return kappa_scores, top_keywords, top_kappas, top_directions, high_keywords, ultra_low_keywords, low_keywords, high_directions, low_directions, 1, 1, 1, directions
+        return kappa_scores,  directions
 
     def rankByDirections(self, movie_names, movie_vectors, file_names, directions):
         dict = {}
@@ -225,17 +116,11 @@ def main():
         newSVM = SVM(vector_path=fp+"\\"+fn, class_path="filmdata\classesNewKeywords/class-all",
                  amount_to_cut_at=200, training_data=10000, name_distinction=fn, largest_cut=2500000)
     """
-    fp = "newdata/spaces/AUTOENCODERsigmoidsigmoidmse120sigmoid[200]"
+    path="newdata/spaces/"
+    fp = "AUTOENCODER1sigmoidsoftmaxbinary_crossentropy2sigmoid[700]FINETUNED"
+   # fp = "filmdata/films200.mds/films200"
+    newSVM = SVM(vector_path=path+fp+".mds", class_type="Keywords", amount_to_cut_at=200, training_data=10000, name_distinction=fp, largest_cut=9999999999)
 
-    for x in range(1, 2):
-        newSVM = SVM(vector_path=fp+".mds", class_path="filmdata\classesNewKeywords/class-all",
-                 amount_to_cut_at=25, training_data=10000, name_distinction=fp+str(x), largest_cut=2500)
-
-    fp = "newdata/spaces/AUTOENCODERsigmoidsigmoid120sigmoid[200]"
-
-    for x in range(1, 2):
-        newSVM = SVM(vector_path=fp+".mds", class_path="filmdata\classesNewKeywords/class-all",
-                 amount_to_cut_at=25, training_data=10000, name_distinction=fp+str(x), largest_cut=2500)
 
 
 
