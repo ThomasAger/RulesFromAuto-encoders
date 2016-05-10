@@ -2,6 +2,7 @@
 import DataTasks as dt
 import re
 import numpy as np
+
 import string
 from collections import defaultdict
 import random
@@ -167,48 +168,6 @@ def getIMDBKeywordsForMovieNames(movie_names):
     print "Found:", x
     dt.write1dArray(matched_lines, "filmdata/imdb_movie_keywords.txt")
 
-def getMovieData(class_type="Keywords", class_names=None, numpy_vector_path=None,vector_path=None, class_path=None, input_size=200, class_by_class=False):
-
-    if class_path is not None:
-        movie_labels = dt.convertToInt(dt.importString(class_path), True)
-        movie_labels = zip(*movie_labels)
-        movie_labels = list(movie_labels)
-        for l in range(len(movie_labels)):
-            movie_labels[l] = list(movie_labels[l])
-        print type(movie_labels), len(movie_labels), len(movie_labels[0])
-    else:
-        if class_type == "All":
-            movie_labels = dt.getAllLabels("Keywords")
-            genre_labels = dt.getAllLabels("Genres")
-            for c in range(len(movie_labels)):
-                movie_labels[c].extend(genre_labels[c])
-        else:
-            if class_names is None:
-                if class_by_class:
-                    movie_labels = dt.getClassByClass(class_type)
-                else:
-                    movie_labels = dt.getAllLabels(class_type)
-            else:
-                if len(class_names) == 1:
-                    movie_labels = dt.getLabel(class_type, class_names)
-                else:
-                    movie_labels = dt.getLabels(class_type, class_names)
-    if numpy_vector_path is not None:
-        movie_vectors = np.load(numpy_vector_path)
-        movie_vectors = np.ndarray.tolist(movie_vectors)
-        movie_vectors = list(reversed(zip(*movie_vectors)))
-    elif vector_path is None:
-        movie_vectors = dt.getMovieVectors(input_size=input_size)
-    else:
-        movie_vectors = dt.getMovieVectors(input_size=input_size, vector_path=vector_path)
-    return  movie_vectors, movie_labels
-
-
-def similar(seq1, seq2):
-    if seq1 == seq2:
-        return True
-    else:
-        return False
 
 """
 
@@ -624,20 +583,12 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name
     dt.write1dArray(most_different_words, "filmdata/SVM/most_different_words_" + name + ".txt")
     dt.write1dArray(differences_list, "filmdata/SVM/most_different_values_" + name + ".txt")
 """
-
-getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL1N0.4D10001.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL1N0.4D10001.mm.txt.txt",
-                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
-                    "L1N0.4 to L2N0.4")
-
-getScoreDifferences("filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL2N0.4D10002.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNl2N0.4D10002.mm.txt.txt",
-                    "filmdata/MSDA/ALL_NAMES_Phrases_msda_representation_sowNL3N0.4D10003.mm.txt.txt",
-                    "filmdata/MSDA/ALL_SCORES_Phrases_msda_representation_sowNL3N0.4D10003.mm.txt.txt",
-                    "L2N0.4 to L3N0.4")
+getScoreDifferences("SVMResults/ALL_NAMES_Phrases_AUTOENCODER0.4tanhtanhmse2tanh2004SDA1.txt",
+                    "SVMResults/ALL_SCORES_Phrases_AUTOENCODER0.4tanhtanhmse2tanh2004SDA1.txt",
+                    "SVMResults/ALL_NAMES_Phrases_AUTOENCODER0.4tanhtanhmse2tanh2004SDA5.txt",
+                    "SVMResults/ALL_SCORES_Phrases_AUTOENCODER0.4tanhtanhmse2tanh2004SDA5.txt",
+                    "0.4L1 to 0.4L5")
 """
-
 def maskingNoise(input, amount_of_corruption):
     amount_of_corruption = len(input[0]) * amount_of_corruption
     print amount_of_corruption
@@ -812,15 +763,33 @@ def outputKeywords():
     vectors = getKeywordVectors(common_keywords, movie_strings, "")
     dt.write2dArray(vectors, "filmdata/classesKeywords/class-extra-all-commonality-" + str(commonality))
 
+
+
+filenames = ["AUTOENCODER0.5tanhtanhmse15tanh[1000]4SDA1","AUTOENCODER0.5tanhtanhmse60tanh[200]4SDA2","AUTOENCODER0.5tanhtanhmse30tanh[1000]4SDA3",
+             "AUTOENCODER0.5tanhtanhmse60tanh[200]4SDA4"]
+"""
+path = "newdata/spaces/"
+id = 155
+for f in filenames:
+    movie_vectors = dt.getMovieVectors(input_size=200, vector_path=path+f+".mds")
+    nearest_movies, nearest_distances = getKNearestMovies(movie_vectors, movie_vectors[id], 30)
+    dt.write1dArray(nearest_movies, "KDNearest/" + f + str(id)+".knmovies")
+    dt.write1dArray(nearest_distances, "KDNearest/" + f + str(id)+".kndistances")
+"""
+"""
 #makeConsistent("filmdata/KeywordData/Matched_Films.txt", "filmdata/KeywordData/Matched_Films_Normalised.txt")
 
 #getMatchedLines("filmdata/KeywordData/All_Films_Norm_Spaces.txt", dt.importString("filmdata/KeywordData/Missing_Films_Normalised.txt"))
 """
-
+"""
 movie_strings = dt.importString("filmdata/filmNames.txt")
 missing_items = getMissing("filmdata/IMDB Keywords Movie Data/Matched_Films.txt", movie_strings)
 dt.write1dArray(missing_items, "filmdata/missing_films.txt")
 
 """
+
+
+
+
 #outputPhrases()
 #outputKeywords()

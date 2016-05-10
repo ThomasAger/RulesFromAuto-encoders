@@ -12,48 +12,44 @@ import SVMTasks
 class SVM:
 
 
-    def __init__(self, class_type="Phrases", name_distinction="", class_names=None, vector_path=None, class_path=None, class_by_class=True, input_size=200,
+    def __init__(self, name_distinction="", class_names=None, vector_path=None, class_path=None, class_by_class=True, input_size=200,
                  training_data=10000, amount_of_scores=400,  low_kappa=0.1, high_kappa=0.5, rankSVM=False, amount_to_cut_at=100, largest_cut=21470000):
         print "getting movie data"
 
-        missing_samples = None
-        if class_type == "NewKeywords":
-            missing_samples="filmdata/MISSING_KEYWORD_ITEMS.txt"
-
-        movie_vectors, movie_labels = mt.getMovieData(class_type=class_type, input_size=input_size, class_path=class_path,
-                                                                   class_names=class_names, class_by_class=class_by_class, vector_path=vector_path)
-
+        movie_vectors = dt.importVectors(vector_path)
+        movie_labels = dt.importLabels(class_path)
         print "getting file names"
-        if class_path is None:
-            file_names = dt.getAllFileNamesAndExtensions("filmdata\classes" + class_type)
-        else:
-            file_names = dt.getAllFileNamesAndExtensions(class_path[:-10])
+
+        file_names = dt.getFns(class_path[:-10])
 
         print len(movie_labels), len(movie_labels[0])
 
         print "getting training and test data"
 
+        x_train = np.asarray(movie_vectors[:training_data])
+        x_test = np.asarray(movie_vectors[training_data:])
 
-        x_train = movie_vectors[:training_data]
-        x_test = movie_vectors[training_data:]
-
-        file_names, movie_labels = SVMTasks.getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut)
         movie_labels = zip(*movie_labels)
+        file_names, movie_labels = getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut)
+        movie_labels = zip(*movie_labels)
+
         y_train = movie_labels[:training_data]
         y_test = movie_labels[training_data:]
-        print len(y_test), len(y_test[0])
+        y_train = np.asarray(zip(*y_train))
+        y_test = np.asarray(zip(*y_test))
 
-        y_train = zip(*y_train)
-        y_test = zip(*y_test)
 
-        movie_names = None
-        movie_vectors = None
-        movie_labels = None
 
-        kappa_scores, directions =   self.runAllSVMs(len(y_train), amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM)
+        print len(y_train), len(y_test), training_data
 
-        dt.write1dArray(kappa_scores, "SVMResults/ALL_SCORES_"+ class_type+"_"+name_distinction+".txt")
-        dt.write1dArray(file_names, "SVMResults/ALL_NAMES_"+ class_type+"_"+name_distinction+".txt")
+        print "getting kappa scores"
+
+        kappa_scores, directions =   self.runAllSVMs(y_test, y_train, x_train, x_test, file_names)
+
+        dt.write1dArray(kappa_scores, "SVMResults/ALL_SCORES_"+name_distinction+".txt")
+        dt.write1dArray(file_names, "SVMResults/ALL_NAMES_"+name_distinction+".txt")
+
+        dt.write2dArray(directions, "directions/"+name_distinction+".directions")
 
 
 
@@ -72,21 +68,22 @@ class SVM:
         direction = clf.coef_
         return direction
 
-    def runSVM(self, y_test, y_train, x_train, x_test, class_type, input_size, file_names):
+    def runSVM(self, y_test, y_train, x_train, x_test):
         clf = svm.LinearSVC()
         clf.fit(x_train, y_train)
-        direction = clf.coef_
+        direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(x_test)
         y_pred = y_pred.tolist()
         kappa_score = kappa(y_test, y_pred)
         return kappa_score,  direction
 
-    def runAllSVMs(self, keyword_amount, amount_of_scores, y_test, y_train, x_train, x_test, class_type, input_size, file_names, low_kappa, high_kappa, rankSVM):
+    def runAllSVMs(self,  y_test, y_train, x_train, x_test, file_names):
         kappa_scores = []
         directions = []
         for y in range(len(y_train)):
-            kappa,  direction = self.runSVM(y_test[y], y_train[y], x_train, x_test, class_type, input_size, file_names)
+            kappa, direction = self.runSVM(y_test[y], y_train[y], x_train, x_test)
             kappa_scores.append(kappa)
+            directions.append(direction)
             print y, kappa, file_names[y]
 
         return kappa_scores,  directions
@@ -105,22 +102,45 @@ class SVM:
             dict[file_names[d]] = top_ranked_movies
         return dict
 
+    def getSampledData(self, file_names, movie_labels, amount_to_cut_at, largest_cut):
+        print len(movie_labels)
+        print len(movie_labels[0])
+
+        for yt in range(len(movie_labels)):
+            y1 = 0
+            y0 = 0
+            for y in range(len(movie_labels[yt])):
+                if movie_labels[yt][y] == 1:
+                    y1 += 1
+                if movie_labels[yt][y] == 0:
+                    y0 += 1
+
+            if y1 < amount_to_cut_at or y1 > largest_cut:
+                print yt, "len(0):", y0, "len(1):", y1, "DELETED", file_names[yt]
+                movie_labels[yt] = None
+                file_names[yt] = None
+                continue
+            print yt, "len(0):", y0, "len(1):", y1, file_names[yt]
+
+        file_names = [x for x in file_names if x is not None]
+        movie_labels = [x for x in movie_labels if x is not None]
+
+        return file_names, movie_labels
 
 def main():
-    print "starting"
-    """
-    fp = "D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed"
+    path="Clusters/"
+    #path="filmdata/films200.mds/"
+    #array = ["700", "400", "100"]
+    filenames = [ "AUTOENCODER1.0tanhtanhmse2tanh2004SDACut2004LeastSimilarHIGH0.18,0.01"]
 
-    for x in range(1, 5):
-        fn = "msda_representation_sowNL"+ str(x) + "N0.6D1000"+ str(x) + ".mm.txt"
-        newSVM = SVM(vector_path=fp+"\\"+fn, class_path="filmdata\classesNewKeywords/class-all",
-                 amount_to_cut_at=200, training_data=10000, name_distinction=fn, largest_cut=2500000)
     """
-    path="newdata/spaces/"
-    fp = "AUTOENCODER1sigmoidsoftmaxbinary_crossentropy2sigmoid[700]FINETUNED"
-   # fp = "filmdata/films200.mds/films200"
-    newSVM = SVM(vector_path=path+fp+".mds", class_type="Keywords", amount_to_cut_at=200, training_data=10000, name_distinction=fp, largest_cut=9999999999)
 
+                 "AUTOENCODER0.2tanhtanhmse15tanh[1000]4SDA1","AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA2","AUTOENCODER0.2tanhtanhmse30tanh[1000]4SDA3",
+                 "AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA4"
+    """
+    cut = 200
+    for f in range(1, 6):
+        newSVM = SVM(vector_path=path+filenames[0]+".clusters", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[0]+"Cut"+str(cut)+str(f), largest_cut=9999999999)
 
 
 

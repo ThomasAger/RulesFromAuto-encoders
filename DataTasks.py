@@ -8,73 +8,38 @@ DATA IMPORTING TASKS
 """
 
 
-
-def getMovieVectors(input_size=200, vector_path=None):
-    if vector_path is None:
-        return convertToFloat(importString("filmdata/films" + str(input_size) + ".mds/films" + str(input_size) + ".mds"))
-    else:
-        return convertToFloat(importString(vector_path))
-
-def getAllLabels(class_type):
-    return convertToInt(importString("filmdata/classes" + str(class_type) + "/class-All"), True)
-
-def getClassByClass(class_type):
-    all_classes = convertToInt(importString("filmdata/classes" + str(class_type) + "/class-All"), True)
-    class_by_class = []
-    for y in range(len(all_classes[0])):
-        building_array = []
-        for x in range(len(all_classes)):
-            building_array.append(all_classes[x][y])
-        class_by_class.append(building_array)
-    return class_by_class
-
-def getLabels(class_type, class_names):
-    labels = []
-    for class_name in class_names:
-        labels.append(convertToInt(importString("filmdata/classes"+class_type+"/class-" + class_name + ""), False))
-    return labels
-
-def getLabel(class_type, class_names):
-    labels = convertToInt(importString("filmdata/classes"+class_type+"/class-" + class_names[0] + ""), False)
-    return labels
+def importNumpyVectors(numpy_vector_path=None):
+    movie_vectors = np.load(numpy_vector_path)
+    movie_vectors = np.ndarray.tolist(movie_vectors)
+    movie_vectors = list(reversed(zip(*movie_vectors)))
+    movie_vectors = np.asarray(movie_vectors)
+    return movie_vectors
 
 def importString(file_name):
-    file = open(file_name, "r")
-    temp_strings = []
-    with file as s:
-        temp_strings.extend(s)
-    return temp_strings
+    with open(file_name, "r") as infile:
+        string_array = [line.strip() for line in infile]
+    return string_array
 
-def getAllFileNames(folder_path):
-    file_names = []
-    for i in os.listdir(folder_path):
-        if i.endswith("All") == False and i.endswith("all") == False and i.endswith("nonbinary") == False and i.endswith('archive') == False:
-            file_names.append(i)
-    return file_names
+def importLabels(file_name):
+    with open(file_name, "r") as infile:
+        int_array = [map(int, line.strip().split()) for line in infile]
+    return int_array
 
+def importVectors(file_name):
+    with open(file_name, "r") as infile:
+        int_array = [map(float, line.strip().split()) for line in infile]
+    return int_array
 
-def getAllFileNamesAndExtensions(folder_path):
+def getFns(folder_path):
     print folder_path
     file_names = []
     print len(os.listdir(folder_path))
-    for i in os.listdir(folder_path):
-        #print i
-        if i != "class-all" and i != "nonbinary" and i != "low_keywords" and i != "archive":
+    onlyfiles = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    for i in onlyfiles:
+        if i != "class-all" and i != "nonbinary" and i != "low_keywords" and i != "class-All" and i != "archive":
             file_names.append(i)
     return file_names
 
-def importFile(file):
-    temp_strings = []
-    with file as s:
-        temp_strings.extend(s)
-    return temp_strings
-
-def importClasses(root_dir):
-    classes = []
-    for subdir, dirs, files in os.walk(root_dir):
-        for directory_file in files:
-            classes.append(convertToInt(importString(root_dir + directory_file), False))
-    return classes
 
 """
 
@@ -83,73 +48,12 @@ DATA EDITING TASKS
 """
 
 
-def convertTo2d(movie_labels):
-    movie_labels_2d = []
-    for l in range(len(movie_labels)):
-        if movie_labels[l] == 0:
-            movie_labels_2d.append([1, 0])
-        else:
-            movie_labels_2d.append([0, 1])
-    return movie_labels_2d
-
 def splitData(training_data, movie_vectors, movie_labels):
     x_train = np.asarray(movie_vectors[:training_data])
     y_train = np.asarray(movie_labels[:training_data])
-
     x_test = np.asarray(movie_vectors[training_data:])
     y_test = np.asarray(movie_labels[training_data:])
     return  x_train, y_train,  x_test, y_test
-
-def convertTo2d(movie_labels):
-    movie_labels_2d = []
-    for l in range(len(movie_labels)):
-        if movie_labels[l] == 0:
-            movie_labels_2d.append([1, 0])
-        else:
-            movie_labels_2d.append([0, 1])
-    return movie_labels_2d
-
-def sampleData(X_data, Y_data, sparsity):
-    Y_arranged_data = []
-    X_arranged_data = []
-    active_count = 0
-    for d in range(len(Y_data)):
-        if Y_data[d] == 1:
-            active_count = active_count + 1
-            Y_arranged_data.insert(0, Y_data[d])
-            X_arranged_data.insert(0, X_data[d])
-        else:
-            Y_arranged_data.append(Y_data[d])
-            X_arranged_data.append(X_data[d])
-    amountOf0 = active_count + active_count*sparsity
-    Y_sampled_data = Y_arranged_data[:amountOf0]
-    X_sampled_data = X_arranged_data[:amountOf0]
-    return X_sampled_data, Y_sampled_data
-
-
-def countHitsAndMisses(our_classes, correct_classes):
-    failures1 = 0
-    failures0 = 0
-    total1 = 0
-    total0 = 0
-    for c in range(len(our_classes)):
-        if our_classes[c] != correct_classes[c]:
-            if correct_classes[c] == 1:
-                failures1 = failures1 + 1
-            else:
-                failures0 = failures0 + 1
-    return failures1, failures0
-
-
-def countValues(count_array):
-    valueType1 = 0
-    valueType0 = 0
-    for c in count_array:
-        if c == 1:
-            valueType1 = valueType1 + 1
-        else:
-            valueType0 = valueType0 + 1
-    return valueType1, valueType0
 
 def convertToFloat(string_array):
     temp_floats = []
@@ -163,57 +67,8 @@ def convertToFloat(string_array):
     return temp_floats
 
 
-def convertToInt(string_array, vectors):
-    temp_ints = []
-    for string in string_array:
-        int_strings = string.split()
-
-        i = 0
-        for int_string in int_strings:
-            int_strings[i] = int(int_string)
-            i = i + 1
-        if(vectors):
-            temp_ints.append(int_strings)
-        else:
-            temp_ints.extend(int_strings)
-    return temp_ints
-
-
-    # refactor this
-def printClasses(Y_test, Y_predicted, n_test):
-    misclassified1 = 0
-    classified1 = 0
-    misclassified0 = 0
-    classified0 = 0
-    correctCount = 0
-    amt_correct = 0
-    films_classified_correctly = []
-    for sets in range(len(Y_predicted)):
-        correctCount = 0
-        for c in range(len(Y_predicted[sets])):
-            if Y_test[sets][c] == 1 and Y_predicted[sets][c] == 0:
-                misclassified1 = misclassified1 + 1
-            elif Y_test[sets][c] == 1 and Y_predicted[sets][c] == 1:
-                classified1 = classified1 + 1
-                correctCount = correctCount + 1
-            elif Y_test[sets][c] == 0 and Y_predicted[sets][c] == 1:
-                misclassified0 = misclassified0 + 1
-            else:
-                classified0 = classified0 + 1
-                correctCount = correctCount + 1
-        if correctCount >= len(Y_test[0]):
-            amt_correct = amt_correct + 1
-    return amt_correct
-
-"""
-
-OUTPUT TASKS
-
-"""
-
 def write2dArray(array, name):
     file = open(name, "w")
-
     for i in xrange(len(array)):
         for n in xrange(len(array[i])):
             file.write(str(array[i][n]) + " ")
@@ -240,11 +95,8 @@ def rewriteToAll(array_of_all, place_to_write):
         file.write("\n")
     file.close()
 
-def writeToSheet(row, file_name):
-    print "Would write to sheet here."
-
 def writeAllPhrasesToSingleFile(files_folder, phrases):
-    file_names = getAllFileNamesAndExtensions(files_folder)
+    file_names = getFns(files_folder)
     matched_file_names = []
     all_names = []
 
@@ -278,9 +130,8 @@ Note: This method is currently missing 12 files.
 
 """
 
-
 def writeAllKeywordsToSingleFile(files_folder):
-    file_names = getAllFileNamesAndExtensions(files_folder)
+    file_names = getFns(files_folder)
     all_names = []
     for f in file_names:
         if f != "all":
@@ -297,53 +148,26 @@ def writeAllKeywordsToSingleFile(files_folder):
 #writeAllKeywordsToSingleFile("F:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\unprocessed.tar\sorted_data\dvd\one_hot")
 
 def mean_of_array(array):
-    total = []
-    for a in range(len(array)):
-        for v in range(len(array[a])):
+    total = array[0]
+    for a in range(1, len(array)):
+        for v in range(1, len(array[a])):
             total[v] = total[v] + array[a][v]
     for v in total:
         v = v / len(array)
     return total
 
-def moveFiles(files_folder, phrases):
-    file_names = getAllFileNames(files_folder)
-    for p in phrases:
-        for f in file_names:
-            if f.strip() == p.strip():
-                shutil.copyfile(files_folder + "/" + f, files_folder + "/low_keywords/" + f)
+def checkIfInArray(array, thing):
+    for t in array:
+        if thing == t:
+            return True
+    return False
 
 
-
-def sortAndOutput(file_name, second_file_name, output_file_name, second_output_file_name):
-    file1 = open(file_name, "r")
-    file2 = open(second_file_name, "r")
-    lines1 = file1.readlines()
-    lines2 = file2.readlines()
-    for line in range(len(lines1)):
-        lines1[line] = lines1[line].strip()
-        lines2[line] = lines2[line].strip()
-    lines1 = sorted(lines1)
-    lines2 = [y for (y,x) in sorted(zip(lines2,lines1))]
-    write1dArray(lines1, output_file_name)
-    write1dArray(lines2, second_output_file_name)
+def sortByArray(Y, X):
+    sorted_X = sorted(X)
+    sorted_Y = zip(*sorted(zip(Y,sorted_X)))[1]
+    return list(sorted_Y)
 """
 sortAndOutput("filmdata/KeywordData/most_common_keywords.txt", "filmdata/KeywordData/most_common_keywords_values.txt",
               "filmdata/KeywordData/most_common_keywordsSORTED.txt", "filmdata/KeywordData/most_common_keyword_valuesSORTED.txt")
 """
-
-def get1Counts(file_name):
-    file = open(file_name, "r")
-    lines = file.readlines()
-    count_array = []
-    for line in lines:
-        line = line.strip()
-        line_file = open("filmdata/classesPhrases/" + line, "r")
-        count = 0
-        for lf in line_file:
-            if int(lf.strip()) == 1:
-                count += 1
-        count_array.append(count)
-        print count
-    write1dArray(count_array, "filmdata/count_array.txt")
-
-#get1Counts("filmdata/all-200-20-200 sorted.txt")
