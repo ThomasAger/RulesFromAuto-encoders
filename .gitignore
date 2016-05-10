@@ -7,3 +7,8 @@ ratings.list
 IMDB_movie_data_15000FRPDURING.txt
 SVMResults/
 SVMTrimmed/
+Clusters/
+Directions/
+scores/
+KDNearest/
+KNNScores/

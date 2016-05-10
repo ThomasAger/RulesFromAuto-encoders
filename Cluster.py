@@ -125,7 +125,7 @@ def main():
     high_threshold = 0.4
     filename = "AUTOENCODER1.0tanhtanhmse2tanh2004SDACut2001"
     Cluster(low_threshold, high_threshold, filename)
-    low_threshold = 0.12
+    low_threshold = 0.14
     high_threshold = 0.35
     filename = "AUTOENCODER1.0tanhtanhmse2tanh2004SDACut2002"
     Cluster(low_threshold, high_threshold, filename)
