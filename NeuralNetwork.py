@@ -4,21 +4,14 @@ from __future__ import unicode_literals
 import numpy as np
 from keras.layers.noise import GaussianNoise
 import DataTasks as dt
-import MovieTasks
 from keras.layers.core import Dense, Activation, Dropout, AutoEncoder
 from keras.layers import containers
 from keras.layers.advanced_activations import LeakyReLU
-from keras.regularizers import activity_l2
+from keras.regularizers import l2, l1
 from keras.optimizers import SGD, Adagrad, Adadelta, Adam
-import theano
-import os
 from sklearn.metrics import f1_score
 from keras.models import Sequential
-import SVM
 from keras.models import model_from_json
-import json
-import csv
-import pandas
 class NeuralNetwork:
 
     # The shared model
@@ -28,7 +21,7 @@ class NeuralNetwork:
     def __init__(self,  hidden_layer_sizes=[400], output_size=100, training_data=10000, class_path="",
                  epochs=250,  learn_rate=0.05, loss="binary_crossentropy", batch_size=100, decay=1e-06,
                  hidden_activation="relu", layer_init="glorot_uniform", output_activation="softmax", dropout_chance=0.5,
-                  class_mode="binary",save_space=False, autoencoder_space = None, encoders=None,
+                  class_mode="binary",save_space=False, autoencoder_space = None, encoders=None, hidden_layer_size=100,
                  file_name="unspecified_filename", vector_path=None, layers_to_cut_at=None, reg=0,
                  optimizer="adagrad", class_names=None, is_autoencoder=False, noise=0,  numpy_vector_path=None):
 
@@ -69,14 +62,14 @@ class NeuralNetwork:
                 if hidden_activation=="LeakyReLU":
                     self.encoder = containers.Sequential([
                         GaussianNoise(noise, input_shape=(input_size,)),
-                        Dense(output_dim=hidden_layer_sizes[0],  input_dim=input_size, init=layer_init, activation="linear",activity_regularizer=activity_l2(reg)),
+                        Dense(output_dim=hidden_layer_size,  input_dim=input_size, init=layer_init, activation="linear",W_regularizer=l1(reg)),
                         LeakyReLU(alpha=.3)],)
                 else:
                     self.encoder = containers.Sequential([
                         GaussianNoise(noise, input_shape=(input_size,)),
-                        Dense(output_dim=hidden_layer_sizes[0],  input_dim=input_size, init=layer_init, activation=hidden_activation,activity_regularizer=activity_l2(reg)),])
+                        Dense(output_dim=hidden_layer_size,  input_dim=input_size, init=layer_init, activation=hidden_activation,W_regularizer=l1(reg)),])
             else:
-                self.encoder = Dense(output_dim=hidden_layer_sizes[0],  input_dim=input_size, init=layer_init, activation=hidden_activation,activity_regularizer=activity_l2(reg))
+                self.encoder = Dense(output_dim=hidden_layer_size,  input_dim=input_size, init=layer_init, activation=hidden_activation,W_regularizer=l1(reg))
             decoder = Dense(output_dim=output_size, init=layer_init, activation=output_activation)
             model.add(AutoEncoder(encoder=self.encoder, decoder=decoder,
                            output_reconstruction=False))
@@ -197,47 +190,54 @@ def main():
         class_path="filmdata/classesGenres/class-All"
         loss = "mse"
         optimizer="rmsprop"
-        epochs=2
-        hidden_activation="sigmoid"
-        layers_to_cut_at=[0]
+        epochs=1
+        hidden_activation="tanh"
+        layers_to_cut_at=[1]
         save_space=True
         batch_size=1
         class_mode="categorical"
         is_autoencoder = True
-        hidden_layer_sizess = [200,200,200,200,200,200,200,200]
+        hidden_layer_sizess = [200,200,200,200]
         print n
         noise = n * 0.1
         print noise
         amount_of_sda=4
-        numpy_vector_path="D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed/" + "NORMALIZEDno_below200no_above0.25.npy"
+        numpy_vector_path=None#D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed/" + "NORMALIZEDno_below200no_above0.25.npy"
         input_size=200
-        output_size=25
+        output_size=200
         learn_rate = 0.01
-        reg = 0.02
+        vector_path = "filmdata/films200.mds/films200.mds"
+        reg = 0.0
         SDA_end_space = []
         SDA_encoders = []
         for s in range(0, len(hidden_layer_sizess)):
             if s >= 1:
-                output_activation="relu"
-                epochs=2
+                output_activation="tanh"
                 input_size = hidden_layer_sizess[s]
                 output_size = hidden_layer_sizess[s]
+                #noise = noise + 0.1
+                reg = 0.0
+                noise += 0.2
                 SDA = NeuralNetwork( autoencoder_space=SDA_end_space, learn_rate=learn_rate, batch_size=batch_size,
                         epochs=epochs, is_autoencoder=is_autoencoder,  class_mode=class_mode, reg=reg,
+                                     hidden_layer_size=hidden_layer_sizess[s],
                                            numpy_vector_path=numpy_vector_path, noise=noise, class_path=class_path,
                                         save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
                                            hidden_activation=hidden_activation, output_activation=output_activation, hidden_layer_sizes=hidden_layer_sizess,
-                                          file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation +
+                                          file_name="N"+str(noise)+"R"+str(reg)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation +
                                                     str(hidden_layer_sizess[s])  + str(amount_of_sda)+ "SDA" + str(s+1))
             else:
-                output_activation="linear"
+                output_activation="tanh"
                 SDA = NeuralNetwork( autoencoder_space= None, epochs=epochs, is_autoencoder=is_autoencoder,  class_mode=class_mode,  output_size=output_size,
-                                         class_path=class_path, numpy_vector_path=numpy_vector_path, noise=noise,reg=reg, learn_rate=learn_rate,
+                                         class_path=class_path, numpy_vector_path=numpy_vector_path, noise=noise,reg=reg, learn_rate=learn_rate, vector_path=vector_path,
                                         save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer, batch_size=batch_size,
+                                     hidden_layer_size=hidden_layer_sizess[s],
                                            hidden_activation=hidden_activation, output_activation=output_activation, hidden_layer_sizes=hidden_layer_sizess,
-                                          file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_layer_sizess[s]) + str(amount_of_sda) + "SDA" + str(s+1))
+                                          file_name="N"+str(noise)+"R"+str(reg)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_layer_sizess[s]) + str(amount_of_sda) + "SDA" + str(s+1))
+                noise = 0.4
             SDA_end_space = SDA.getEndSpace()
             SDA_encoders.append(SDA.getEncoder())
+        """
         class_path="filmdata/classesGenres/class-All"
         loss="binary_crossentropy"
         optimizer="adagrad"
@@ -260,6 +260,7 @@ def main():
                                         save_space=save_space, layers_to_cut_at=layers_to_cut_at, loss=loss, optimizer=optimizer,
                                            hidden_activation=hidden_activation,  output_activation=output_activation, hidden_layer_sizes=hidden_layer_sizes,
                                           file_name=str(noise)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_layer_sizes) + str(amount_of_sda))
+        """
     print "dun"
     """
     #WORKING @ HIGHEST ACCURACY, F1, ETC FOR MULTI-LABEL, FOLLOWING "REVISITING MULTI-LABEL NEURAL NETS" GUIDELINES

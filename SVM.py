@@ -6,7 +6,6 @@ from skll.metrics import kappa
 import DataTasks as dt
 import MovieTasks as mt
 from scipy import stats, linalg, spatial
-import SVMTasks
 
 
 class SVM:
@@ -30,7 +29,7 @@ class SVM:
         x_test = np.asarray(movie_vectors[training_data:])
 
         movie_labels = zip(*movie_labels)
-        file_names, movie_labels = getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut)
+        file_names, movie_labels = self.getSampledData(file_names, movie_labels, amount_to_cut_at, largest_cut)
         movie_labels = zip(*movie_labels)
 
         y_train = movie_labels[:training_data]
@@ -69,7 +68,7 @@ class SVM:
         return direction
 
     def runSVM(self, y_test, y_train, x_train, x_test):
-        clf = svm.LinearSVC()
+        clf = svm.LinearSVC(class_weight="auto")
         clf.fit(x_train, y_train)
         direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(x_test)
@@ -102,6 +101,7 @@ class SVM:
             dict[file_names[d]] = top_ranked_movies
         return dict
 
+
     def getSampledData(self, file_names, movie_labels, amount_to_cut_at, largest_cut):
         print len(movie_labels)
         print len(movie_labels[0])
@@ -128,10 +128,11 @@ class SVM:
         return file_names, movie_labels
 
 def main():
-    path="Clusters/"
+    path="newdata/spaces/"
     #path="filmdata/films200.mds/"
     #array = ["700", "400", "100"]
-    filenames = [ "AUTOENCODER1.0tanhtanhmse2tanh2004SDACut2004LeastSimilarHIGH0.18,0.01"]
+    filenames = [ "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1", "AUTOENCODERN0.6R0.0tanhtanhmse2tanh1004SDA2",
+                  "AUTOENCODERN0.8R0.0tanhtanhmse2tanh504SDA3", "AUTOENCODERN1.0R0.0tanhtanhmse2tanh254SDA4"]
 
     """
 
@@ -139,8 +140,8 @@ def main():
                  "AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA4"
     """
     cut = 200
-    for f in range(1, 6):
-        newSVM = SVM(vector_path=path+filenames[0]+".clusters", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[0]+"Cut"+str(cut)+str(f), largest_cut=9999999999)
+    for f in range(len(filenames)-1, 0, -1):
+        newSVM = SVM(vector_path=path+filenames[f]+".mds", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[f]+"Cut"+str(cut)+str(f), largest_cut=9999999999)
 
 
 

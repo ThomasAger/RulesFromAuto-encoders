@@ -75,6 +75,7 @@ def write2dArray(array, name):
         file.write("\n")
     file.close()
 
+
 def write1dArray(array, name):
     file = open(name, "w")
     for i in xrange(len(array)):
@@ -150,11 +151,12 @@ def writeAllKeywordsToSingleFile(files_folder):
 def mean_of_array(array):
     total = array[0]
     for a in range(1, len(array)):
-        for v in range(1, len(array[a])):
+        for v in range(0, len(array[a])):
             total[v] = total[v] + array[a][v]
-    for v in total:
-        v = v / len(array)
+    for v in range(len(total)):
+        total[v] = total[v] / len(array)
     return total
+
 
 def checkIfInArray(array, thing):
     for t in array:
@@ -162,11 +164,25 @@ def checkIfInArray(array, thing):
             return True
     return False
 
+def getIndexInArray(array, thing):
+    for t in range(len(array)):
+        if thing == array[t]:
+            return t
+    return None
 
-def sortByArray(Y, X):
-    sorted_X = sorted(X)
-    sorted_Y = zip(*sorted(zip(Y,sorted_X)))[1]
-    return list(sorted_Y)
+def find_nth(haystack, needle, n):
+    start = haystack.find(needle)
+    while start >= 0 and n > 1:
+        start = haystack.find(needle, start+len(needle))
+        n -= 1
+    return start
+
+def sortByArray(array_to_sort, array_to_sort_by):
+    array_to_sort_by = np.asarray(array_to_sort_by)
+    array_to_sort = np.asarray(array_to_sort)
+    sorting_indices = array_to_sort_by.argsort()
+    sorted_array = array_to_sort[sorting_indices[::-1]]
+    return sorted_array.tolist()
 """
 sortAndOutput("filmdata/KeywordData/most_common_keywords.txt", "filmdata/KeywordData/most_common_keywords_values.txt",
               "filmdata/KeywordData/most_common_keywordsSORTED.txt", "filmdata/KeywordData/most_common_keyword_valuesSORTED.txt")
