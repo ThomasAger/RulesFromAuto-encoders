@@ -30,6 +30,12 @@ def importVectors(file_name):
         int_array = [map(float, line.strip().split()) for line in infile]
     return int_array
 
+def importDiscreteVectors(file_name):
+    with open(file_name, "r") as infile:
+        int_array = [line.strip().split() for line in infile]
+    return int_array
+
+
 def getFns(folder_path):
     print folder_path
     file_names = []

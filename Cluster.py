@@ -21,6 +21,21 @@ def getXLeastSimilarIndex(term, terms_to_match, terms_to_ignore, amt):
         least_similar_term_indexes.append(term_index)
     return least_similar_term_indexes
 
+def getNextClusterTerm(cluster_terms, terms_to_match, terms_to_ignore, amt):
+    min_value = 999999999999999
+    min_index = 0
+    for t in range(len(terms_to_match)):
+        max_value = 0
+        if dt.checkIfInArray(terms_to_ignore, t) is False:
+            for c in range(len(cluster_terms)):
+                s = getSimilarity(cluster_terms[c], terms_to_match[t])
+                if s > max_value:
+                    max_value = s
+            if max_value < min_value:
+                min_value = max_value
+                min_index = t
+    return min_index
+
 def getXMostSimilarIndex(term, terms_to_match, terms_to_ignore, amt):
     most_similar_term_indexes = []
     for a in range(amt):
@@ -111,9 +126,9 @@ class Cluster:
                 directions_to_add.append(hv_directions[i])
                 names_to_add.append(hv_names[i])
             else:
-                combined_terms = dt.mean_of_array(least_similar_clusters)
-                ti = getXLeastSimilarIndex(combined_terms, hv_directions, least_similar_cluster_ids, 1)[0]
+                ti = getNextClusterTerm(least_similar_clusters, hv_directions, least_similar_cluster_ids, 1)
                 least_similar_cluster_ids.append(ti)
+                print len(hv_directions), len(hv_names)
                 least_similar_clusters.append(hv_directions[ti])
                 least_similar_cluster_names.append(hv_names[ti])
                 print str(i+1)+"/"+str(amt_of_clusters), "Least Similar Term", hv_names[ti]
@@ -191,45 +206,59 @@ class Cluster:
 
 def main():
     """
-    filename = "AUTOENCODER1.0tanhtanhmse2tanh2004SDACut2001HIGH0.4,0.3"
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh254SDA4Cut2007HIGH0.201,0.021"#"AUTOENCODERN0.6R0.0tanhtanhmse1tanh254SDA4Cut2007HIGH0.2,0.021"#"AUTOENCODERN0.6R0.0tanhtanhmse1tanh2004SDA1Cut2004HIGH0.41,0.1"#
+    low_fn = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh254SDA4Cut2007LOW0.201,0.021"
     directions_fn = "Directions/"+filename+".directions"
+    low_directions_fn = "Directions/"+low_fn+".directions"
+    low_names_fn = "Directions/"+low_fn+".names"
     names_fn = "Directions/"+filename+".names"
     directions = dt.importVectors(directions_fn)
+    low_directions = dt.importVectors(low_directions_fn)
+    low_names = dt.importString(low_names_fn)
     names = dt.importString(names_fn)
-    for n in names:
+    term = "learned"
+    direction = []
+    for n in range(len(names)):
+        if names[n] == term:
+            direction.append(directions[n])
+    least_sim = getXMostSimilarIndex(direction[0], low_directions, [], 10)
+    for n in least_sim:
+        print low_names[n]
 
-
-    dt.write1dArray(, "Clusters/"+filename+"MostSimilar".txt)
-    dt.write1dArray(least_similar_index, "Clusters/"+filename+"LeastSimilar".txt)
-    print "Checking:", name_to_get_most_similar
-    for i in most_similar_index:
-        print names[i]
     """
-
+    """
     low_threshold = 0.1
     high_threshold = 0.44
     filename = "films200Cut2000"
     print filename
     Cluster(low_threshold, high_threshold, filename)
+    """
+
+    low_threshold = 0.021
+    high_threshold = 0.20
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh254SDA4Cut2007"
+    print filename
+    Cluster(low_threshold, high_threshold, filename)
+
     low_threshold = 0.1
-    high_threshold = 0.4
-    filename = "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1Cut2000"
+    high_threshold = 0.41
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh2004SDA1Cut2004"
     print filename
     Cluster(low_threshold, high_threshold, filename)
-    low_threshold = 0.08
-    high_threshold = 0.37
-    filename = "AUTOENCODERN0.6R0.0tanhtanhmse2tanh1004SDA2Cut2001"
+
+    low_threshold = 0.055
+    high_threshold = 0.34
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh1004SDA2Cut2005"
     print filename
     Cluster(low_threshold, high_threshold, filename)
-    low_threshold = 0.06
-    high_threshold = 0.28
-    filename = "AUTOENCODERN0.8R0.0tanhtanhmse2tanh504SDA3Cut2002"
+
+    low_threshold = 0.033
+    high_threshold = 0.26
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh504SDA3Cut2006"
     print filename
     Cluster(low_threshold, high_threshold, filename)
-    low_threshold = 0.04
-    high_threshold = 0.21
-    filename = "AUTOENCODERN1.0R0.0tanhtanhmse2tanh254SDA4Cut2003"
-    print filename
-    Cluster(low_threshold, high_threshold, filename)
+
+
+
 
 if  __name__ =='__main__':main()

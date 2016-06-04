@@ -26,7 +26,7 @@ def getKNeighbors(vector_path="filmdata/films200.mds/films200.mds", class_path="
     x_train, y_train, x_test, y_test = dt.splitData(training_data, movie_vectors, movie_labels)
 
     classifier = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors, algorithm=algorithm, leaf_size=leaf_size)
-    classifier.fit(x_train, y_train)
+    classifier.fit(x_train, y_train.ravel())
     y_pred = classifier.predict(x_test)
 
     f1 = f1_score(y_test, y_pred, average='macro')
@@ -36,15 +36,12 @@ def getKNeighbors(vector_path="filmdata/films200.mds/films200.mds", class_path="
 
 
 def main():
-    for n in range(3, 5):
-        file_path = "newdata/spaces/"
-        if n % 2 == 0:
-            file_name = "AUTOENCODER0.4tanhtanhmse1tanh[200]4SDA" + str(n)
-        else:
-            file_name = "AUTOENCODER0.4tanhtanhmse1tanh[1000]4SDA" + str(n)
-        vector_path=file_path+file_name + ".mds"
+    file_path = "newdata/spaces/"
+    filenames = [ "AUTOENCODERN0.4R0.0tanhtanhmse1tanh2004SDA1", "AUTOENCODERN0.6R0.0tanhtanhmse1tanh1004SDA2"]
+    for f in range(len(filenames)):
+        vector_path=file_path+filenames[f] + ".mds"
         print vector_path[:-4]
-        getKNeighbors(vector_path=vector_path, name=file_name)
+        getKNeighbors(vector_path=vector_path, name=filenames[f], class_path="filmdata/classesGenres/class-Comedy")
 
 if  __name__ =='__main__':main()
 

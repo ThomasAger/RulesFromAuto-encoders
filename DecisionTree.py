@@ -146,6 +146,23 @@ def main():
     movie_names_fn = "filmdata/filmNames.txt"
     clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, movie_names_fn, label_names_fn, cluster_names_fn,tree_fn,  10000, cluster_to_classify, max_depth)
     """
+    amt_of_labels = "P0.1"
+    low_threshold = 0.1
+    high_threshold = 0.44
+    filename = "films200"
+    cluster_vectors_fn = "Rankings/" + filename + amt_of_labels + ".space"
+    cluster_names_fn = "Clusters/" + filename + "Cut2000"+  "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    low_threshold = 0.1
+    high_threshold = 0.4
+    labels_fn = "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1"
+    label_names_fn = "Clusters/" + labels_fn + "Cut2000"+  "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    cluster_labels_fn = "Rankings/" + labels_fn + amt_of_labels + ".labels"
+    movie_names_fn = "filmdata/filmNames.txt"
+    tree_fn = "films200To0.4AE" + str(max_depth)
+    clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, movie_names_fn, label_names_fn, cluster_names_fn,tree_fn,  10000, cluster_to_classify, max_depth)
+
+
+    print "FIRST AE TO SECOND AE"
     low_threshold = 0.1
     high_threshold = 0.4
     filename = "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1"

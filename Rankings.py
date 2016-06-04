@@ -2,7 +2,7 @@ import numpy as np
 import DataTasks as dt
 from collections import OrderedDict
 class Rankings:
-    def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percent):
+    def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percents, percentage_increment):
 
         directions = dt.importVectors(directions_fn)
         vectors = dt.importVectors(vectors_fn)
@@ -11,12 +11,19 @@ class Rankings:
 
         rankings, ranking_names = self.getRankings(directions, vectors, cluster_names, vector_names)
         rankings = np.array(rankings)
-        labels = self.createLabels(rankings, percent)
-        labels = np.asarray(labels)
-        labels = labels.transpose()
+        for percent in percents:
+            labels = self.createLabels(rankings, percent)
+            labels = np.asarray(labels)
+            labels = labels.transpose()
+            dt.write2dArray(labels, "Rankings/" + fn + "P" + str(percent) +".labels")
+        discrete_labels = self.createDiscreteLabels(rankings, percentage_increment)
+        print discrete_labels[0]
+        discrete_labels = np.asarray(discrete_labels)
+        discrete_labels = discrete_labels.transpose()
         rankings = rankings.transpose()
-        dt.write2dArray(labels, "Rankings/" + fn + ".labels")
+
         dt.write2dArray(rankings, "Rankings/" + fn + ".space")
+        dt.write2dArray(discrete_labels, "Rankings/" + fn + "P" + str(percentage_increment) + ".discrete")
         array = []
         short_array = []
         for key, value in ranking_names.iteritems():
@@ -55,10 +62,26 @@ class Rankings:
             labels.append(label)
         return labels
 
+    def createDiscreteLabels(self, rankings, percentage_increment):
+        np_rankings = np.asarray(rankings)
+        labels = []
+        for r in np_rankings:
+            label = ["100%" for x in range(len(rankings[0]))]
+            sorted_indices = r.argsort()
+            for i in range(0, 100, percentage_increment):
+                print i, len(rankings[0]) * (i*0.01), len(rankings[0]) * ((i+percentage_increment) * 0.01)
+                top_indices = sorted_indices[len(rankings[0]) * (i*0.01):len(rankings[0]) * ((i+percentage_increment) * 0.01)]
+                for t in top_indices:
+                    label[t] = str(i+percentage_increment) + "%"
+            labels.append(label)
+        return labels
 
 
 def main():
-    percent = 0.1
+    percent = [0.1, 0.05, 0.02, 0.01]
+    percent_increment = 1
+
+    """
     low_threshold = 0.1
     high_threshold = 0.44
     filename = "films200"
@@ -68,47 +91,56 @@ def main():
     movie_names = "filmdata/filmNames.txt"
     rank_fn = filename + "P" + str(percent)
     print filename
-    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent)
+    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent, percent_increment)
+    """
     low_threshold = 0.1
-    high_threshold = 0.4
-    filename = "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1"
-    cluster_fn = "Clusters/" + filename + "Cut2000"+ "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
-    movie_vector_fn = "newdata/spaces/" + filename +".mds"
-    cluster_names = "Clusters/" + filename + "Cut2000" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
-    movie_names = "filmdata/filmNames.txt"
-    rank_fn = filename + "P" + str(percent)
-    print filename
-    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent)
-    low_threshold = 0.08
-    high_threshold = 0.37
-    filename = "AUTOENCODERN0.6R0.0tanhtanhmse2tanh1004SDA2"
-    cluster_fn = "Clusters/" + filename + "Cut2001" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
-    movie_vector_fn = "newdata/spaces/" + filename +".mds"
-    cluster_names = "Clusters/" + filename + "Cut2001" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
-    movie_names = "filmdata/filmNames.txt"
-    rank_fn = filename + "P" + str(percent)
-    print filename
-    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent)
-    low_threshold = 0.06
-    high_threshold = 0.28
-    filename = "AUTOENCODERN0.8R0.0tanhtanhmse2tanh504SDA3"
-    cluster_fn = "Clusters/" + filename + "Cut2002" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
+    high_threshold = 0.418
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh2004SDA1"
+    cluster_fn = "Clusters/" + filename + "Cut2004" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
     movie_vector_fn = "newdata/spaces/" + filename + ".mds"
-    cluster_names = "Clusters/" + filename + "Cut2002" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    cluster_names = "Clusters/" + filename + "Cut2004" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
     movie_names = "filmdata/filmNames.txt"
-    rank_fn = filename + "P" + str(percent)
+    rank_fn = filename
     print filename
-    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent)
-    low_threshold = 0.04
-    high_threshold = 0.21
-    filename = "AUTOENCODERN1.0R0.0tanhtanhmse2tanh254SDA4"
-    cluster_fn = "Clusters/" + filename + "Cut2003" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
+    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent, percent_increment)
+
+    low_threshold =  0.055
+    high_threshold = 0.34
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh1004SDA2"
+    cluster_fn = "Clusters/" + filename + "Cut2005"+ "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
+    movie_vector_fn = "newdata/spaces/" + filename +".mds"
+    cluster_names = "Clusters/" + filename + "Cut2005" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    movie_names = "filmdata/filmNames.txt"
+    rank_fn = filename
+    print filename
+    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent, percent_increment)
+
+    low_threshold = 0.033
+    high_threshold = 0.26
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh504SDA3"
+    cluster_fn = "Clusters/" + filename + "Cut2006" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
+    movie_vector_fn = "newdata/spaces/" + filename +".mds"
+    cluster_names = "Clusters/" + filename + "Cut2006" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    movie_names = "filmdata/filmNames.txt"
+    rank_fn = filename
+    print filename
+    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent, percent_increment)
+
+    low_threshold = 0.021
+    high_threshold = 0.20
+    filename = "AUTOENCODERN0.6R0.0tanhtanhmse1tanh254SDA4"
+    cluster_fn = "Clusters/" + filename + "Cut2007" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".clusters"
     movie_vector_fn = "newdata/spaces/" + filename + ".mds"
-    cluster_names = "Clusters/" + filename + "Cut2003" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
+    cluster_names = "Clusters/" + filename + "Cut2007" + "LeastSimilarHIGH"+str(high_threshold)+","+str(low_threshold)+".names"
     movie_names = "filmdata/filmNames.txt"
-    rank_fn = filename + "P" + str(percent)
+    rank_fn = filename
     print filename
-    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent)
+    Rankings(cluster_fn, movie_vector_fn, cluster_names, movie_names, rank_fn, percent, percent_increment)
+
+
+
+
+
 
 
 

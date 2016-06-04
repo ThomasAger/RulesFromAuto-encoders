@@ -197,9 +197,9 @@ def main():
         batch_size=1
         class_mode="categorical"
         is_autoencoder = True
-        hidden_layer_sizess = [200,200,200,200]
+        hidden_layer_sizess = [200,100,50,25]
         print n
-        noise = n * 0.1
+        noise = n * 0
         print noise
         amount_of_sda=4
         numpy_vector_path=None#D:\Dropbox\PhD\My Work\Code\MSDA\Python\Data\IMDB\Transformed/" + "NORMALIZEDno_below200no_above0.25.npy"
@@ -217,7 +217,7 @@ def main():
                 output_size = hidden_layer_sizess[s]
                 #noise = noise + 0.1
                 reg = 0.0
-                noise += 0.2
+                noise = 0
                 SDA = NeuralNetwork( autoencoder_space=SDA_end_space, learn_rate=learn_rate, batch_size=batch_size,
                         epochs=epochs, is_autoencoder=is_autoencoder,  class_mode=class_mode, reg=reg,
                                      hidden_layer_size=hidden_layer_sizess[s],
@@ -234,7 +234,6 @@ def main():
                                      hidden_layer_size=hidden_layer_sizess[s],
                                            hidden_activation=hidden_activation, output_activation=output_activation, hidden_layer_sizes=hidden_layer_sizess,
                                           file_name="N"+str(noise)+"R"+str(reg)+hidden_activation+output_activation + loss+ str(epochs) + hidden_activation + str(hidden_layer_sizess[s]) + str(amount_of_sda) + "SDA" + str(s+1))
-                noise = 0.4
             SDA_end_space = SDA.getEndSpace()
             SDA_encoders.append(SDA.getEncoder())
         """

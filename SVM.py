@@ -131,8 +131,8 @@ def main():
     path="newdata/spaces/"
     #path="filmdata/films200.mds/"
     #array = ["700", "400", "100"]
-    filenames = [ "AUTOENCODERN0.4R0.0tanhtanhmse2tanh2004SDA1", "AUTOENCODERN0.6R0.0tanhtanhmse2tanh1004SDA2",
-                  "AUTOENCODERN0.8R0.0tanhtanhmse2tanh504SDA3", "AUTOENCODERN1.0R0.0tanhtanhmse2tanh254SDA4"]
+    filenames = ["AUTOENCODERN0R0.0tanhtanhmse1tanh254SDA4",
+                  "AUTOENCODERN0R0.0tanhtanhmse1tanh504SDA3"]
 
     """
 
@@ -140,7 +140,7 @@ def main():
                  "AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA4"
     """
     cut = 200
-    for f in range(len(filenames)-1, 0, -1):
+    for f in range(len(filenames)):
         newSVM = SVM(vector_path=path+filenames[f]+".mds", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[f]+"Cut"+str(cut)+str(f), largest_cut=9999999999)
 
 
