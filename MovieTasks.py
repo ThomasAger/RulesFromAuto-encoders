@@ -763,7 +763,24 @@ def outputKeywords():
     vectors = getKeywordVectors(common_keywords, movie_strings, "")
     dt.write2dArray(vectors, "filmdata/classesKeywords/class-extra-all-commonality-" + str(commonality))
 
+def reMapPPMI(ordered_IDs, file_names):
+    print "Mapping to memory."
+    for i in range(len(ordered_IDs)):
+        ordered_IDs[i] = str(ordered_IDs[i])
+    for i in range(len(ordered_IDs)):
+        for f in range(len(file_names)):
+            id = file_names[f].split(".")[0]
+            if int(ordered_IDs[i]) == int(id) and int(ordered_IDs[i]) != -1:
+                print ordered_IDs[i], id
+                file = open("filmdata/vectors/Tokens/" + file_names[f])
+                lines = file.readlines()
+                dt.write1dArray(lines, "filmdata/NewTokens/"+str(i)+".ppmi")
+                file.close()
+            elif int(ordered_IDs[i]) == -1:
+                dt.write1dArray([[""]], "filmdata/NewTokens/"+str(i)+".error")
 
+
+#reMapPPMI(dt.importString("filmdata/filmIds.txt"), dt.getFns("filmdata/vectors/tokens/"))
 
 filenames = ["AUTOENCODER0.5tanhtanhmse15tanh[1000]4SDA1","AUTOENCODER0.5tanhtanhmse60tanh[200]4SDA2","AUTOENCODER0.5tanhtanhmse30tanh[1000]4SDA3",
              "AUTOENCODER0.5tanhtanhmse60tanh[200]4SDA4"]

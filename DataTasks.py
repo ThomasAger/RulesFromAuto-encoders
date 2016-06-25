@@ -53,6 +53,14 @@ DATA EDITING TASKS
 
 """
 
+def writeArrayDict(dict, name):
+    file = open(name, "w")
+    for key, value in dict.iteritems():
+        file.write(str(key) + ": ")
+        for v in value:
+            file.write(str(v) + " ")
+        file.write("\n")
+    file.close()
 
 def splitData(training_data, movie_vectors, movie_labels):
     x_train = np.asarray(movie_vectors[:training_data])
@@ -101,7 +109,13 @@ def rewriteToAll(array_of_all, place_to_write):
             file.write(str(array_of_all[i][j]) + " ")
         file.write("\n")
     file.close()
+"""
+string = importString("RuleType/top1k.txt")
 
+string.sort()
+
+write1dArray(string, "RuleType/top1ksorted.txt")
+"""
 def writeAllPhrasesToSingleFile(files_folder, phrases):
     file_names = getFns(files_folder)
     matched_file_names = []
@@ -111,7 +125,7 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
         #print p
         for f in file_names:
             #print f
-            if "class-" + p.strip() == f.strip():
+            if p.strip() == f.strip():
                 print "matched:", f
                 matched_file_names.append(f)
                 break
@@ -130,7 +144,7 @@ def writeAllPhrasesToSingleFile(files_folder, phrases):
     print "File about to be written."
     rewriteToAll(all_names, files_folder + "\class-all")
 
-#writeAllPhrasesToSingleFile("filmdata/classesPhrases", importString("filmdata/uniquePhrases.txt"))
+#writeAllPhrasesToSingleFile("filmdata/classesPhrases/nonbinary", importString("SVMResults/films100.names"))
 """
 
 Note: This method is currently missing 12 files.

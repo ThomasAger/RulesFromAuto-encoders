@@ -45,8 +45,8 @@ class SVM:
 
         kappa_scores, directions =   self.runAllSVMs(y_test, y_train, x_train, x_test, file_names)
 
-        dt.write1dArray(kappa_scores, "SVMResults/ALL_SCORES_"+name_distinction+".txt")
-        dt.write1dArray(file_names, "SVMResults/ALL_NAMES_"+name_distinction+".txt")
+        dt.write1dArray(kappa_scores, "SVMResults/"+name_distinction+".scores")
+        dt.write1dArray(file_names, "SVMResults/"+name_distinction+".names")
 
         dt.write2dArray(directions, "directions/"+name_distinction+".directions")
 
@@ -131,17 +131,17 @@ def main():
     path="newdata/spaces/"
     #path="filmdata/films200.mds/"
     #array = ["700", "400", "100"]
-    filenames = ["AUTOENCODERN0R0.0tanhtanhmse1tanh254SDA4",
-                  "AUTOENCODERN0R0.0tanhtanhmse1tanh504SDA3"]
+    filenames = ["films100N0.6H75L1", "films100N0.6H50L2", "films100N0.6H25L3",
+                 "films100N0.6H50L4", "films100N0.6H75L5", "films100N0.6H100L6"]
 
     """
 
                  "AUTOENCODER0.2tanhtanhmse15tanh[1000]4SDA1","AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA2","AUTOENCODER0.2tanhtanhmse30tanh[1000]4SDA3",
                  "AUTOENCODER0.2tanhtanhmse60tanh[200]4SDA4"
     """
-    cut = 200
+    cut = 100
     for f in range(len(filenames)):
-        newSVM = SVM(vector_path=path+filenames[f]+".mds", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[f]+"Cut"+str(cut)+str(f), largest_cut=9999999999)
+        newSVM = SVM(vector_path=path+filenames[f]+".mds", class_path="filmdata/classesPhrases/class-All", amount_to_cut_at=cut, training_data=10000, name_distinction=filenames[f]+"LS", largest_cut=9999999999)
 
 
 
